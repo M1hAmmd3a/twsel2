@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -174,6 +174,21 @@
             z-index: 999;
             box-shadow: var(--shadow-lg);
             animation: pulse 2s infinite;
+        }
+        
+        .btn-toggle-panel {
+            background: var(--gradient-primary);
+            color: white;
+            position: fixed;
+            top: 100px;
+            right: 30px;
+            z-index: 999;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn-toggle-panel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.5);
         }
         
         @keyframes pulse {
@@ -384,6 +399,23 @@
             box-shadow: var(--shadow-lg);
             z-index: 999;
             overflow: hidden;
+            display: none;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .drivers-panel.active {
+            display: block;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
         
         .panel-header {
@@ -391,12 +423,35 @@
             color: white;
             padding: 15px 20px;
             font-family: 'Cairo', sans-serif;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
         .panel-header h3 {
             font-size: 18px;
             font-weight: 700;
             margin: 0;
+        }
+        
+        .close-panel-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .close-panel-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
         }
         
         .drivers-list {
@@ -719,6 +774,12 @@
                 padding: 10px 15px;
             }
             
+            .btn-toggle-panel {
+                top: 85px;
+                right: 15px;
+                padding: 10px 15px;
+            }
+            
             .modal-content {
                 padding: 25px;
                 width: 95%;
@@ -792,10 +853,17 @@
         <span class="badge" id="requestCount" style="background: var(--danger); color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-right: 5px; display: none;"></span>
     </button>
     
+    <!-- Toggle Drivers Panel Button -->
+    <button class="btn btn-toggle-panel" id="togglePanelBtn">
+        <span>👥</span>
+        <span>السائقون</span>
+    </button>
+    
     <!-- Active Drivers Panel -->
     <div class="drivers-panel" id="driversPanel">
         <div class="panel-header">
             <h3>🚕 السائقون النشطون</h3>
+            <button class="close-panel-btn" id="closePanelBtn">×</button>
         </div>
         <div class="drivers-list" id="driversList">
             <p style="text-align: center; color: #999; padding: 20px;">لا يوجد سائقون متصلون حالياً</p>
@@ -1045,15 +1113,6 @@
                 
                 showNotification('مرحباً', `تم تسجيل دخولك كسائق: ${name}. ستظهر الآن في قائمة السائقين`);
                 
-                // تحديث اللوحة فوراً لإظهار السائق
-                setTimeout(() => {
-                    const driversListElement = document.getElementById('driversList');
-                    if (driversListElement && driversListElement.innerHTML.includes('لا يوجد سائقون')) {
-                        // إعادة قراءة القائمة من Firebase
-                        database.ref('drivers').once('value');
-                    }
-                }, 500);
-                
             } catch (error) {
                 console.error('Error logging in driver:', error);
                 showNotification('خطأ', 'حدث خطأ أثناء تسجيل الدخول');
@@ -1078,10 +1137,19 @@
                 document.getElementById('mailBtn').style.display = 'none';
                 document.getElementById('onlineIndicator').style.display = 'none';
             }
-            
-            // اللوحة تظهر دائماً للجميع
-            document.getElementById('driversPanel').style.display = 'block';
         }
+        
+        // Toggle Drivers Panel
+        document.getElementById('togglePanelBtn').addEventListener('click', () => {
+            const panel = document.getElementById('driversPanel');
+            panel.classList.toggle('active');
+        });
+        
+        // Close Panel Button
+        document.getElementById('closePanelBtn').addEventListener('click', () => {
+            const panel = document.getElementById('driversPanel');
+            panel.classList.remove('active');
+        });
         
         // Logout Driver
         async function logoutDriver() {
