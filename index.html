@@ -1,4 +1,4 @@
-<!DOCTYPE html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -1024,6 +1024,34 @@
         let pickupMap = null;
         let pickupMarker = null;
         
+        // استعادة حالة السائق من localStorage عند تحميل الصفحة
+        function restoreDriverState() {
+            const savedDriver = localStorage.getItem('currentDriver');
+            if (savedDriver) {
+                try {
+                    currentUser = JSON.parse(savedDriver);
+                    if (currentUser.isDriver) {
+                        updateDriverUI();
+                        listenToRequests();
+                        
+                        // التحقق من أن السائق لا يزال online في Firebase
+                        database.ref(`drivers/${currentUser.driverId}/online`).once('value', (snapshot) => {
+                            if (!snapshot.val()) {
+                                // السائق offline في Firebase، نظف localStorage
+                                logoutDriver();
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error('Error restoring driver state:', e);
+                    localStorage.removeItem('currentDriver');
+                }
+            }
+        }
+        
+        // استدعاء الدالة عند تحميل الصفحة
+        restoreDriverState();
+        
         // Modal Functions
         function openModal(modalId) {
             document.getElementById(modalId).classList.add('active');
@@ -1095,6 +1123,9 @@
                     phone: phone
                 };
                 
+                // حفظ حالة السائق في localStorage
+                localStorage.setItem('currentDriver', JSON.stringify(currentUser));
+                
                 // Register driver in Firebase
                 await database.ref(`drivers/${driverId}`).set({
                     name: name,
@@ -1163,6 +1194,9 @@
                     online: false,
                     lastSeen: firebase.database.ServerValue.TIMESTAMP
                 });
+                
+                // حذف من localStorage
+                localStorage.removeItem('currentDriver');
                 
                 currentUser = {
                     isDriver: false,
@@ -1827,10 +1861,11 @@
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
             if (currentUser.isDriver) {
+                // تحديث lastSeen فقط، لا نغير online إلى false
                 database.ref(`drivers/${currentUser.driverId}`).update({
-                    online: false,
                     lastSeen: firebase.database.ServerValue.TIMESTAMP
                 });
+                // نحتفظ بـ localStorage لاستعادة الحالة عند العودة
             }
         });
     </script>
