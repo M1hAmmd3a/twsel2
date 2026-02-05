@@ -1189,7 +1189,7 @@
             showLoading();
             
             try {
-                // Update driver status
+                // Update driver status to offline
                 await database.ref(`drivers/${currentUser.driverId}`).update({
                     online: false,
                     lastSeen: firebase.database.ServerValue.TIMESTAMP
@@ -1207,10 +1207,13 @@
                 
                 updateDriverUI();
                 
-                // إخفاء اللوحة للعملاء (غير السائقين)
-                // لكن تبقى مرئية إذا كان المستخدم يريد رؤية السائقين المتاحين
-                
                 showNotification('تم', 'تم تسجيل الخروج بنجاح');
+                
+                // إعادة تحميل الصفحة لتنظيف كل شيء
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+                
             } catch (error) {
                 console.error('Error logging out:', error);
                 showNotification('خطأ', 'حدث خطأ أثناء تسجيل الخروج');
