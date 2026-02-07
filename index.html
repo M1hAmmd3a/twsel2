@@ -409,6 +409,52 @@
             color: var(--primary);
         }
         
+        /* Search Results */
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid var(--light);
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .search-results.active {
+            display: block;
+        }
+        
+        .search-result-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--light);
+            transition: all 0.2s;
+        }
+        
+        .search-result-item:hover {
+            background: var(--light);
+        }
+        
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .search-result-name {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+        
+        .search-result-address {
+            font-size: 13px;
+            color: #666;
+        }
+        
         /* Badge */
         .badge {
             display: inline-block;
@@ -1014,7 +1060,19 @@
             </div>
             <form id="requestForm">
                 <div class="form-group">
-                    <label class="form-label">حدد موقعك على الخريطة</label>
+                    <label class="form-label">ابحث عن موقعك</label>
+                    <div style="position: relative;">
+                        <input type="text" class="form-input" id="searchLocation" placeholder="مثال: الجروشية، المخفية، شارع نابلس...">
+                        <div id="searchResults" class="search-results"></div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" id="searchBtn" style="width: 100%; margin-top: 10px;">
+                        <span>🔍</span>
+                        <span>بحث</span>
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">أو حدد موقعك على الخريطة</label>
                     <div id="pickupMap" class="map-selector"></div>
                     <div class="location-display" id="locationDisplay" style="display: none;">
                         <span>📍</span>
@@ -1082,14 +1140,12 @@
         const database = firebase.database();
         
         // Password Hashing - تشفير كلمة السر
-        // كلمة السر الأصلية: 1234651
-        // نستخدم دالة تشفير بسيطة لكن آمنة
         function simpleHash(str) {
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
                 const char = str.charCodeAt(i);
                 hash = ((hash << 5) - hash) + char;
-                hash = hash & hash; // Convert to 32bit integer
+                hash = hash & hash;
             }
             // إضافة salt للأمان
             const salt = 'tulkarm_taxi_2026_secret';
@@ -1103,13 +1159,37 @@
             return finalHash.toString(16);
         }
         
-        // كلمة السر المشفرة المخزنة (للمقارنة فقط)
-        const CORRECT_PASSWORD_HASH = simpleHash('1234651'); // سيتم حسابه تلقائياً
+        // قائمة السائقين المصرح لهم - كل سائق له اسمه وكلمة سره الخاصة
+        const AUTHORIZED_DRIVERS = [
+            {
+                name: 'محمد عبد الله حسين ابو قصيدو',
+                passwordHash: simpleHash('1234765')
+            },
+            
+        ];
         
-        // Verify Password
-        function verifyPassword(inputPassword) {
-            const inputHash = simpleHash(inputPassword);
-            return inputHash === CORRECT_PASSWORD_HASH;
+        // كلمة سر المدير
+        const ADMIN_PASSWORD_HASH = simpleHash('1234651');
+        
+        // Verify Driver Login
+        function verifyDriverLogin(name, password) {
+            const driver = AUTHORIZED_DRIVERS.find(d => d.name === name);
+            if (!driver) {
+                return { success: false, error: 'الاسم غير موجود في قائمة السائقين المصرح لهم' };
+            }
+            
+            const inputHash = simpleHash(password);
+            if (inputHash !== driver.passwordHash) {
+                return { success: false, error: 'كلمة السر غير صحيحة' };
+            }
+            
+            return { success: true };
+        }
+        
+        // Verify Admin Password
+        function verifyAdminPassword(password) {
+            const inputHash = simpleHash(password);
+            return inputHash === ADMIN_PASSWORD_HASH;
         }
         
         // Initialize Map centered on Tulkarm
@@ -1234,9 +1314,11 @@
             const phone = document.getElementById('driverPhone').value.trim();
             const password = document.getElementById('driverPassword').value;
             
-            // التحقق من كلمة السر المشفرة
-            if (!verifyPassword(password)) {
-                showNotification('خطأ', 'كلمة السر غير صحيحة!');
+            // التحقق من الاسم وكلمة السر
+            const verification = verifyDriverLogin(name, password);
+            
+            if (!verification.success) {
+                showNotification('خطأ', verification.error);
                 return;
             }
             
@@ -1327,8 +1409,8 @@
             
             const password = document.getElementById('adminPassword').value;
             
-            // التحقق من كلمة السر المشفرة
-            if (!verifyPassword(password)) {
+            // التحقق من كلمة سر المدير
+            if (!verifyAdminPassword(password)) {
                 showNotification('خطأ', 'كلمة سر المدير غير صحيحة!');
                 return;
             }
@@ -1525,6 +1607,127 @@
                 }
             }, 300);
         }
+        
+        // أماكن شهيرة في طولكرم
+        const TULKARM_LOCATIONS = [
+            { name: 'الجروشية', lat: 32.3108, lng: 35.0278, address: 'حي الجروشية، طولكرم' },
+            { name: 'المخفية', lat: 32.3150, lng: 35.0320, address: 'حي المخفية، طولكرم' },
+            { name: 'شارع نابلس', lat: 32.3120, lng: 35.0285, address: 'شارع نابلس الرئيسي، طولكرم' },
+            { name: 'المستشفى الحكومي', lat: 32.3095, lng: 35.0265, address: 'مستشفى ثابت ثابت الحكومي، طولكرم' },
+            { name: 'جامعة فلسطين التقنية', lat: 32.3180, lng: 35.0350, address: 'جامعة فلسطين التقنية - خضوري، طولكرم' },
+            { name: 'المسجد الكبير', lat: 32.3100, lng: 35.0270, address: 'المسجد الكبير، وسط البلد، طولكرم' },
+            { name: 'دوار الشهداء', lat: 32.3115, lng: 35.0275, address: 'دوار الشهداء، طولكرم' },
+            { name: 'السوق القديم', lat: 32.3105, lng: 35.0272, address: 'السوق القديم، طولكرم' },
+            { name: 'حي الحمام', lat: 32.3080, lng: 35.0250, address: 'حي الحمام، طولكرم' },
+            { name: 'ضاحية ذنابة', lat: 32.3140, lng: 35.0300, address: 'ضاحية ذنابة، طولكرم' }
+        ];
+        
+        // Search Location
+        document.getElementById('searchBtn').addEventListener('click', () => {
+            const searchQuery = document.getElementById('searchLocation').value.trim();
+            
+            if (!searchQuery) {
+                showNotification('تنبيه', 'الرجاء إدخال اسم المكان للبحث');
+                return;
+            }
+            
+            searchLocation(searchQuery);
+        });
+        
+        // Search on Enter key
+        document.getElementById('searchLocation').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('searchBtn').click();
+            }
+        });
+        
+        // Search Location Function
+        function searchLocation(query) {
+            const results = TULKARM_LOCATIONS.filter(loc => 
+                loc.name.includes(query) || loc.address.includes(query)
+            );
+            
+            const searchResults = document.getElementById('searchResults');
+            
+            if (results.length === 0) {
+                searchResults.innerHTML = '<div class="search-result-item"><div class="search-result-name">لا توجد نتائج</div><div class="search-result-address">جرب البحث بكلمات أخرى</div></div>';
+                searchResults.classList.add('active');
+                return;
+            }
+            
+            searchResults.innerHTML = results.map(result => `
+                <div class="search-result-item" onclick="selectLocation(${result.lat}, ${result.lng}, '${result.name}')">
+                    <div class="search-result-name">📍 ${result.name}</div>
+                    <div class="search-result-address">${result.address}</div>
+                </div>
+            `).join('');
+            
+            searchResults.classList.add('active');
+        }
+        
+        // Select Location from Search
+        window.selectLocation = function(lat, lng, name) {
+            // إخفاء نتائج البحث
+            document.getElementById('searchResults').classList.remove('active');
+            
+            // تحديث الموقع
+            userLocation = { lat, lng };
+            
+            // تحديث الخريطة - التأكد من أن الخريطة موجودة
+            if (!pickupMap) {
+                initPickupMap();
+                setTimeout(() => {
+                    moveMapToLocation(lat, lng, name);
+                }, 500);
+            } else {
+                moveMapToLocation(lat, lng, name);
+            }
+        };
+        
+        // Move map to location and add marker
+        function moveMapToLocation(lat, lng, name) {
+            // تحريك الخريطة للموقع
+            pickupMap.setView([lat, lng], 16);
+            
+            // إضافة أو تحديث العلامة (Marker)
+            if (pickupMarker) {
+                // تحديث موقع العلامة الموجودة
+                pickupMarker.setLatLng([lat, lng]);
+            } else {
+                // إنشاء علامة جديدة
+                pickupMarker = L.marker([lat, lng], { draggable: true })
+                    .addTo(pickupMap)
+                    .bindPopup(`<b>${name}</b>`)
+                    .openPopup();
+                
+                // إضافة حدث عند سحب العلامة
+                pickupMarker.on('dragend', (e) => {
+                    const pos = e.target.getLatLng();
+                    userLocation = { lat: pos.lat, lng: pos.lng };
+                    updateLocationDisplay(pos.lat, pos.lng);
+                });
+            }
+            
+            // تحديث العرض
+            updateLocationDisplay(lat, lng);
+            
+            // تحديث وصف الموقع
+            document.getElementById('locationDescription').value = name;
+            
+            showNotification('تم', `تم تحديد موقعك: ${name}`);
+        }
+        
+        // إخفاء نتائج البحث عند النقر خارجها
+        document.addEventListener('click', (e) => {
+            const searchResults = document.getElementById('searchResults');
+            const searchInput = document.getElementById('searchLocation');
+            const searchBtn = document.getElementById('searchBtn');
+            
+            if (!searchResults.contains(e.target) && e.target !== searchInput && e.target !== searchBtn) {
+                searchResults.classList.remove('active');
+            }
+        });
         
         function updateLocationDisplay(lat, lng) {
             document.getElementById('locationDisplay').style.display = 'flex';
@@ -2023,7 +2226,7 @@
                         completedAt: firebase.database.ServerValue.TIMESTAMP
                     });
                 }
-                
+               
                 // إزالة الطلب من الخريطة
                 if (requestMarkers[requestId]) {
                     map.removeLayer(requestMarkers[requestId]);
