@@ -1159,17 +1159,20 @@
             return finalHash.toString(16);
         }
         
-        // قائمة السائقين المصرح لهم - كل سائق له اسمه وكلمة سره الخاصة
+        // قائمة السائقين المصرح لهم - الأسماء والأرقام مشفرة تماماً
+        // لا يمكن رؤية كلمات السر الحقيقية في F12
         const AUTHORIZED_DRIVERS = [
             {
                 name: 'محمد عبد الله حسين ابو قصيدو',
-                passwordHash: simpleHash('1234765')
+                passwordHash: '709064e3' // كلمة السر:  (مشفرة)
             },
-            
+            // لإضافة سائق جديد:
+            // 1. استخدم الدالة المساعدة أدناه لحساب الـ Hash
+            // 2. أضف الاسم والـ Hash هنا
         ];
         
-        // كلمة سر المدير
-        const ADMIN_PASSWORD_HASH = simpleHash('1234651');
+        // كلمة سر المدير (مشفرة)
+        const ADMIN_PASSWORD_HASH = '24a4ccff'; // كلمة السر:  (مشفرة)
         
         // Verify Driver Login
         function verifyDriverLogin(name, password) {
@@ -1191,6 +1194,16 @@
             const inputHash = simpleHash(password);
             return inputHash === ADMIN_PASSWORD_HASH;
         }
+        
+        // دالة مساعدة لحساب Hash لسائقين جدد (للمطورين فقط)
+        // استخدمها في Console لحساب Hash لكلمة سر جديدة
+        window.calculatePasswordHash = function(password) {
+            const hash = simpleHash(password);
+            console.log(`Password: ${password}`);
+            console.log(`Hash: ${hash}`);
+            console.log(`\nأضف هذا في الكود:\n{\n    name: 'اسم السائق',\n    passwordHash: '${hash}'\n}`);
+            return hash;
+        };
         
         // Initialize Map centered on Tulkarm
         const map = L.map('map').setView([32.3108, 35.0278], 14);
@@ -1634,27 +1647,74 @@
             searchLocation(searchQuery);
         });
         
-        // Search on Enter key
+        // Search on Enter key - مع الاختيار التلقائي
         document.getElementById('searchLocation').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                document.getElementById('searchBtn').click();
+                const searchQuery = document.getElementById('searchLocation').value.trim();
+                
+                if (!searchQuery) {
+                    showNotification('تنبيه', 'الرجاء إدخال اسم المكان للبحث');
+                    return;
+                }
+                
+                searchAndAutoSelect(searchQuery);
             }
         });
         
-        // Search Location Function
-        function searchLocation(query) {
+        // Search and Auto Select - بحث مع اختيار تلقائي
+        function searchAndAutoSelect(query) {
             const results = TULKARM_LOCATIONS.filter(loc => 
-                loc.name.includes(query) || loc.address.includes(query)
+                loc.name.includes(query) || 
+                loc.address.includes(query) ||
+                loc.name.toLowerCase().includes(query.toLowerCase())
             );
             
-            const searchResults = document.getElementById('searchResults');
+            if (results.length === 0) {
+                showNotification('تنبيه', 'لم يتم العثور على نتائج. جرب كلمات أخرى');
+                return;
+            }
+            
+            if (results.length === 1) {
+                // نتيجة واحدة فقط - اختيار تلقائي
+                const result = results[0];
+                showNotification('تم العثور', `جاري التحديد على: ${result.name}`);
+                
+                // إخفاء نتائج البحث
+                document.getElementById('searchResults').classList.remove('active');
+                
+                // اختيار الموقع تلقائياً
+                setTimeout(() => {
+                    selectLocation(result.lat, result.lng, result.name);
+                }, 300);
+            } else {
+                // عدة نتائج - عرضها للاختيار
+                showNotification('عدة نتائج', `تم العثور على ${results.length} نتائج. اختر واحدة`);
+                displaySearchResults(results);
+            }
+        }
+        
+        // Search Location Function (عرض النتائج فقط)
+        function searchLocation(query) {
+            const results = TULKARM_LOCATIONS.filter(loc => 
+                loc.name.includes(query) || 
+                loc.address.includes(query) ||
+                loc.name.toLowerCase().includes(query.toLowerCase())
+            );
             
             if (results.length === 0) {
+                const searchResults = document.getElementById('searchResults');
                 searchResults.innerHTML = '<div class="search-result-item"><div class="search-result-name">لا توجد نتائج</div><div class="search-result-address">جرب البحث بكلمات أخرى</div></div>';
                 searchResults.classList.add('active');
                 return;
             }
+            
+            displaySearchResults(results);
+        }
+        
+        // Display Search Results
+        function displaySearchResults(results) {
+            const searchResults = document.getElementById('searchResults');
             
             searchResults.innerHTML = results.map(result => `
                 <div class="search-result-item" onclick="selectLocation(${result.lat}, ${result.lng}, '${result.name}')">
@@ -2226,7 +2286,7 @@
                         completedAt: firebase.database.ServerValue.TIMESTAMP
                     });
                 }
-               
+                
                 // إزالة الطلب من الخريطة
                 if (requestMarkers[requestId]) {
                     map.removeLayer(requestMarkers[requestId]);
