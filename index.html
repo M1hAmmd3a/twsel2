@@ -1127,6 +1127,14 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         
+        // Wait for page to load
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing map...');
+            initializeApp();
+        });
+        
+        function initializeApp() {
+        
         // Password Hashing - تشفير كلمة السر
         function simpleHash(str) {
             let hash = 0;
@@ -1152,7 +1160,7 @@
         const AUTHORIZED_DRIVERS = [
             {
                 name: 'محمد عبد الله حسين ابو قصيدو',
-                passwordHash: '709064e3' // كلمة السر:  (مشفرة)
+                passwordHash: '709064e3' // كلمة السر: 1234765 (مشفرة)
             },
             // لإضافة سائق جديد:
             // 1. استخدم الدالة المساعدة أدناه لحساب الـ Hash
@@ -1160,7 +1168,7 @@
         ];
         
         // كلمة سر المدير (مشفرة)
-        const ADMIN_PASSWORD_HASH = '24a4ccff'; // كلمة السر:  (مشفرة)
+        const ADMIN_PASSWORD_HASH = '24a4ccff'; // كلمة السر: 1234651 (مشفرة)
         
         // Verify Driver Login
         function verifyDriverLogin(name, password) {
@@ -1194,12 +1202,20 @@
         };
         
         // Initialize Map centered on Tulkarm
-        const map = L.map('map').setView([32.3108, 35.0278], 14);
-        
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 19
-        }).addTo(map);
+        let map;
+        try {
+            map = L.map('map').setView([32.3108, 35.0278], 14);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+            
+            console.log('Map initialized successfully');
+        } catch (error) {
+            console.error('Error initializing map:', error);
+            alert('خطأ في تحميل الخريطة: ' + error.message);
+        }
         
         // Custom Icons
         const taxiIcon = L.divIcon({
@@ -1428,17 +1444,27 @@
         
         // Update Admin Stats
         async function updateAdminStats() {
-            // عدد السائقين النشطين
-            const driversSnapshot = await database.ref('drivers').once('value');
-            const drivers = driversSnapshot.val() || {};
-            const activeDrivers = Object.values(drivers).filter(d => d.online).length;
-            document.getElementById('activeDriversCount').textContent = activeDrivers;
-            
-            // عدد الطلبات المعلقة
-            const requestsSnapshot = await database.ref('requests').once('value');
-            const requests = requestsSnapshot.val() || {};
-            const pendingRequests = Object.values(requests).filter(r => r.status === 'pending').length;
-            document.getElementById('pendingRequestsCount').textContent = pendingRequests;
+            try {
+                // عدد السائقين النشطين - استخدام query محدد
+                const activeDriversSnapshot = await database.ref('drivers')
+                    .orderByChild('online')
+                    .equalTo(true)
+                    .once('value');
+                const activeDrivers = activeDriversSnapshot.numChildren();
+                document.getElementById('activeDriversCount').textContent = activeDrivers;
+                
+                // عدد الطلبات المعلقة - استخدام query محدد
+                const pendingRequestsSnapshot = await database.ref('requests')
+                    .orderByChild('status')
+                    .equalTo('pending')
+                    .once('value');
+                const pendingRequests = pendingRequestsSnapshot.numChildren();
+                document.getElementById('pendingRequestsCount').textContent = pendingRequests;
+            } catch (error) {
+                console.error('Error updating admin stats:', error);
+                document.getElementById('activeDriversCount').textContent = 'خطأ';
+                document.getElementById('pendingRequestsCount').textContent = 'خطأ';
+            }
         }
         
         // Logout All Drivers
@@ -1450,14 +1476,24 @@
             showLoading();
             
             try {
-                const driversSnapshot = await database.ref('drivers').once('value');
+                // قراءة السائقين النشطين فقط
+                const driversSnapshot = await database.ref('drivers')
+                    .orderByChild('online')
+                    .equalTo(true)
+                    .once('value');
                 const drivers = driversSnapshot.val() || {};
                 
-                // تسجيل خروج جميع السائقين
+                if (Object.keys(drivers).length === 0) {
+                    showNotification('تنبيه', 'لا يوجد سائقون نشطون حالياً');
+                    hideLoading();
+                    return;
+                }
+                
+                // تسجيل خروج جميع السائقين النشطين
                 const updates = {};
                 Object.keys(drivers).forEach(driverId => {
                     updates[`drivers/${driverId}/online`] = false;
-                    updates[`drivers/${driverId}/lastSeen`] = firebase.database.ServerValue.TIMESTAMP;
+                    updates[`drivers/${driverId}/lastSeen`] = Date.now();
                 });
                 
                 await database.ref().update(updates);
@@ -1465,7 +1501,7 @@
                 // مسح جميع localStorage للسائقين
                 localStorage.clear();
                 
-                showNotification('تم', 'تم تسجيل خروج جميع السائقين بنجاح');
+                showNotification('تم', `تم تسجيل خروج ${Object.keys(drivers).length} سائق بنجاح`);
                 
                 // تحديث الإحصائيات
                 updateAdminStats();
@@ -1477,7 +1513,7 @@
                 
             } catch (error) {
                 console.error('Error logging out all drivers:', error);
-                showNotification('خطأ', 'حدث خطأ أثناء تسجيل الخروج');
+                showNotification('خطأ', 'حدث خطأ أثناء تسجيل الخروج: ' + error.message);
             } finally {
                 hideLoading();
             }
@@ -1529,14 +1565,18 @@
             }
         }
         
-        // Listen to all drivers for the panel
-        database.ref('drivers').on('value', (snapshot) => {
+        // Listen to all drivers for the panel - محسّن للتوفير
+        database.ref('drivers')
+            .orderByChild('online')
+            .equalTo(true)
+            .on('value', (snapshot) => {
             const drivers = snapshot.val() || {};
             const driversList = document.getElementById('driversList');
             
-            // تضمين جميع السائقين المتصلين (بما فيهم السائق الحالي)
+            // فلتر إضافي: فقط السائقين النشطين في آخر 5 دقائق
+            const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
             const onlineDrivers = Object.entries(drivers).filter(([id, driver]) => 
-                driver.online
+                driver.online && driver.lastSeen >= fiveMinutesAgo
             );
             
             if (onlineDrivers.length === 0) {
@@ -1680,12 +1720,16 @@
         
         // Listen to Requests
         function listenToRequests() {
-            database.ref('requests').on('value', (snapshot) => {
+            // قراءة الطلبات المعلقة فقط (توفير Bandwidth)
+            database.ref('requests')
+                .orderByChild('status')
+                .equalTo('pending')
+                .on('value', (snapshot) => {
                 const requests = snapshot.val() || {};
                 
                 // Remove old markers
                 Object.keys(requestMarkers).forEach(requestId => {
-                    if (!requests[requestId] || requests[requestId].status !== 'pending') {
+                    if (!requests[requestId]) {
                         map.removeLayer(requestMarkers[requestId]);
                         delete requestMarkers[requestId];
                     }
@@ -1987,30 +2031,43 @@
                 return;
             }
             
-            // التحقق من أن الطلب لم يتم قبوله من قبل
-            const requestSnapshot = await database.ref(`requests/${requestId}`).once('value');
-            const requestData = requestSnapshot.val();
-            
-            if (!requestData) {
-                showNotification('خطأ', 'الطلب غير موجود');
-                return;
-            }
-            
-            if (requestData.status === 'accepted') {
-                showNotification('تنبيه', 'هذا الطلب تم قبوله من سائق آخر');
-                return;
-            }
-            
             showLoading();
             
             try {
-                await database.ref(`requests/${requestId}`).update({
-                    status: 'accepted',
-                    acceptedBy: currentUser.driverId,
-                    driverName: currentUser.name,
-                    driverPhone: currentUser.phone,
-                    acceptedAt: firebase.database.ServerValue.TIMESTAMP
+                // استخدام transaction للتأكد من قبول طلب واحد فقط
+                const result = await database.ref(`requests/${requestId}`).transaction((current) => {
+                    // إذا كان الطلب غير موجود أو تم قبوله، إلغاء العملية
+                    if (!current || current.status !== 'pending') {
+                        return; // إلغاء التحديث
+                    }
+                    
+                    // تحديث الطلب
+                    current.status = 'accepted';
+                    current.acceptedBy = currentUser.driverId;
+                    current.driverName = currentUser.name;
+                    current.driverPhone = currentUser.phone;
+                    current.acceptedAt = Date.now();
+                    
+                    return current;
                 });
+                
+                // التحقق من نجاح العملية
+                if (!result.committed) {
+                    const requestSnapshot = await database.ref(`requests/${requestId}`).once('value');
+                    const requestData = requestSnapshot.val();
+                    
+                    if (!requestData) {
+                        showNotification('خطأ', 'الطلب غير موجود أو تم حذفه');
+                    } else if (requestData.status === 'accepted') {
+                        showNotification('تنبيه', 'تم قبول هذا الطلب من سائق آخر');
+                    } else {
+                        showNotification('خطأ', 'لا يمكن قبول الطلب حالياً');
+                    }
+                    hideLoading();
+                    return;
+                }
+                
+                const requestData = result.snapshot.val();
                 
                 // حفظ الرحلة في سجل الرحلات
                 const tripId = `trip_${Date.now()}`;
@@ -2023,7 +2080,7 @@
                     destination: requestData.destination,
                     startLocation: requestData.location,
                     status: 'on_the_way',
-                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                    createdAt: Date.now()
                 });
                 
                 map.closePopup();
@@ -2037,7 +2094,7 @@
                 }, 1000);
             } catch (error) {
                 console.error('Error accepting request:', error);
-                showNotification('خطأ', 'حدث خطأ أثناء قبول الطلب');
+                showNotification('خطأ', 'حدث خطأ أثناء قبول الطلب: ' + error.message);
             } finally {
                 hideLoading();
             }
@@ -2178,6 +2235,8 @@
                 // نحتفظ بـ localStorage لاستعادة الحالة عند العودة
             }
         });
+        
+        } // end of initializeApp
     </script>
 </body>
 </html>
