@@ -325,6 +325,8 @@
             align-items: center;
             justify-content: center;
             transition: all 0.3s;
+            position: relative;
+            z-index: 10;
         }
         
         .close-btn:hover {
@@ -1159,8 +1161,8 @@
         // لا يمكن رؤية كلمات السر الحقيقية في F12
         const AUTHORIZED_DRIVERS = [
             {
-                name: 'محمد ابرهيم حسين ابو قصيدو',
-                passwordHash: '709064e3' // كلمة السر:  (مشفرة)
+                name:'محمد ابرهيم حسين ابو قصيدو',
+                passwordHash: '709064e3' // كلمة السر: 1234765 (مشفرة)
             },
             // لإضافة سائق جديد:
             // 1. استخدم الدالة المساعدة أدناه لحساب الـ Hash
@@ -1168,7 +1170,7 @@
         ];
         
         // كلمة سر المدير (مشفرة)
-        const ADMIN_PASSWORD_HASH = '24a4ccff'; // كلمة السر:  (مشفرة)
+        const ADMIN_PASSWORD_HASH = '24a4ccff'; // كلمة السر: 1234651 (مشفرة)
         
         // Verify Driver Login
         function verifyDriverLogin(name, password) {
@@ -1282,14 +1284,45 @@
         // استدعاء الدالة عند تحميل الصفحة
         restoreDriverState();
         
-        // Modal Functions
-        function openModal(modalId) {
+        // Modal Functions (متاحة عالمياً)
+        window.openModal = function(modalId) {
             document.getElementById(modalId).classList.add('active');
-        }
+        };
         
-        function closeModal(modalId) {
+        window.closeModal = function(modalId) {
             document.getElementById(modalId).classList.remove('active');
-        }
+            
+            // إعادة تعيين لوحة المدير عند الإغلاق
+            if (modalId === 'adminModal') {
+                document.getElementById('adminForm').style.display = 'block';
+                document.getElementById('adminPanel').style.display = 'none';
+                document.getElementById('adminForm').reset();
+            }
+            
+            // إعادة تعيين نموذج الطلب
+            if (modalId === 'requestModal') {
+                document.getElementById('requestForm').reset();
+                document.getElementById('locationDisplay').style.display = 'none';
+                userLocation = null;
+                if (pickupMarker && pickupMap) {
+                    pickupMap.removeLayer(pickupMarker);
+                    pickupMarker = null;
+                }
+            }
+            
+            // إعادة تعيين نموذج السائق
+            if (modalId === 'driverModal') {
+                document.getElementById('driverForm').reset();
+            }
+        };
+        
+        // إغلاق الـ modal بالنقر خارجه
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                const modalId = e.target.id;
+                closeModal(modalId);
+            }
+        });
         
         // Show Notification
         function showNotification(title, message, duration = 5000) {
@@ -2240,4 +2273,3 @@
     </script>
 </body>
 </html>
-
