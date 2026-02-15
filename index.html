@@ -411,52 +411,6 @@
             color: var(--primary);
         }
         
-        /* Search Results */
-        .search-results {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 2px solid var(--light);
-            border-top: none;
-            border-radius: 0 0 12px 12px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-        }
-        
-        .search-results.active {
-            display: block;
-        }
-        
-        .search-result-item {
-            padding: 12px 15px;
-            cursor: pointer;
-            border-bottom: 1px solid var(--light);
-            transition: all 0.2s;
-        }
-        
-        .search-result-item:hover {
-            background: var(--light);
-        }
-        
-        .search-result-item:last-child {
-            border-bottom: none;
-        }
-        
-        .search-result-name {
-            font-weight: 600;
-            color: var(--dark);
-            margin-bottom: 4px;
-        }
-        
-        .search-result-address {
-            font-size: 13px;
-            color: #666;
-        }
-        
         /* Badge */
         .badge {
             display: inline-block;
@@ -831,18 +785,20 @@
         @media (max-width: 768px) {
             .header {
                 padding: 0 10px;
-                height: 70px;
+                height: auto;
+                min-height: 70px;
                 flex-wrap: wrap;
+                gap: 10px;
             }
             
             .logo {
-                font-size: 18px;
+                font-size: 16px;
             }
             
             .logo-icon {
-                width: 30px;
-                height: 30px;
-                font-size: 16px;
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
             }
             
             .btn {
@@ -859,7 +815,6 @@
             }
             
             .header-actions {
-                margin-top: 10px;
                 width: 100%;
                 justify-content: center;
                 gap: 10px;
@@ -887,7 +842,7 @@
             }
             
             .map-container {
-                top: 70px;
+                top: 120px;
             }
             
             .notification {
@@ -896,7 +851,7 @@
             }
             
             .drivers-panel {
-                top: 70px;
+                top: 120px;
                 right: 10px;
                 width: calc(100% - 20px);
                 max-width: 350px;
@@ -987,12 +942,13 @@
             </div>
             <form id="driverForm">
                 <div class="form-group">
-                    <label class="form-label">الاسم</label>
-                    <input type="text" class="form-input" id="driverName" placeholder="أدخل اسمك" required>
+                    <label class="form-label">الاسم الكامل</label>
+                    <input type="text" class="form-input" id="driverName" placeholder="أدخل اسمك الكامل" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">رقم الهاتف</label>
-                    <input type="tel" class="form-input" id="driverPhone" placeholder="05xxxxxxxx" required>
+                    <input type="tel" class="form-input" id="driverPhone" placeholder="05xxxxxxxx" required maxlength="10" pattern="05[0-9]{8}">
+                    <small style="color: #666; font-size: 13px;">أدخل رقم هاتفك (10 أرقام تبدأ بـ 05)</small>
                 </div>
                 <div class="form-group">
                     <label class="form-label">كلمة السر</label>
@@ -1000,7 +956,7 @@
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">
                     <span>✓</span>
-                    <span>تسجيل الدخول</span>
+                    <span>تسجيل الدخول كسائق</span>
                 </button>
             </form>
         </div>
@@ -1082,7 +1038,8 @@
                 
                 <div class="form-group">
                     <label class="form-label">رقم الهاتف</label>
-                    <input type="tel" class="form-input" id="phoneNumber" placeholder="05xxxxxxxx" required>
+                    <input type="tel" class="form-input" id="phoneNumber" placeholder="05xxxxxxxx" required maxlength="10" pattern="05[0-9]{8}">
+                    <small style="color: #666; font-size: 13px;">أدخل رقم هاتفك (10 أرقام تبدأ بـ 05)</small>
                 </div>
                 
                 <div class="form-group">
@@ -1137,6 +1094,201 @@
         
         function initializeApp() {
         
+        // ========================================
+        // نظام GPS للسائق - مع معالجة كاملة للأخطاء
+        // ========================================
+        
+        // بدء تتبع موقع السائق
+        function startDriverLocationTracking() {
+            // التحقق من أن المستخدم سائق
+            if (!currentUser.isDriver || !currentUser.driverId) {
+                console.log('GPS: المستخدم ليس سائقاً');
+                return;
+            }
+            
+            // التحقق من دعم المتصفح للـ GPS
+            if (!('geolocation' in navigator)) {
+                showNotification('خطأ', 'متصفحك لا يدعم تحديد الموقع GPS ❌');
+                return;
+            }
+            
+            // طلب الإذن وبدء التتبع
+            console.log('GPS: طلب الإذن...');
+            
+            navigator.geolocation.getCurrentPosition(
+                // Success - حصلنا على الإذن
+                (position) => {
+                    console.log('GPS: تم الحصول على الإذن ✅');
+                    showNotification('GPS نشط', 'تم تفعيل تتبع موقعك 📍', 3000);
+                    
+                    // بدء التتبع المستمر
+                    driverLocationWatcher = navigator.geolocation.watchPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+                            const accuracy = position.coords.accuracy;
+                            
+                            console.log(`GPS: تحديث الموقع - ${lat}, ${lng} (دقة: ${accuracy}m)`);
+                            
+                            // تحديث موقع السائق في Firebase
+                            if (currentUser.driverId) {
+                                database.ref(`drivers/${currentUser.driverId}/location`).set({
+                                    lat: lat,
+                                    lng: lng,
+                                    accuracy: accuracy,
+                                    timestamp: Date.now()
+                                }).then(() => {
+                                    console.log('GPS: تم حفظ الموقع في Firebase ✅');
+                                }).catch((error) => {
+                                    console.error('GPS: خطأ في حفظ الموقع:', error);
+                                });
+                            }
+                        },
+                        // Error
+                        (error) => {
+                            console.error('GPS Error:', error);
+                            let errorMessage = 'خطأ في GPS';
+                            
+                            switch(error.code) {
+                                case error.PERMISSION_DENIED:
+                                    errorMessage = 'تم رفض إذن الموقع. الرجاء السماح بالوصول للموقع في إعدادات المتصفح.';
+                                    break;
+                                case error.POSITION_UNAVAILABLE:
+                                    errorMessage = 'لا يمكن تحديد الموقع. تأكد من تفعيل GPS على جهازك.';
+                                    break;
+                                case error.TIMEOUT:
+                                    errorMessage = 'انتهت مهلة تحديد الموقع. حاول مرة أخرى.';
+                                    break;
+                            }
+                            
+                            showNotification('تنبيه GPS', errorMessage, 8000);
+                        },
+                        // Options - خيارات مُحسّنة
+                        {
+                            enableHighAccuracy: true, // دقة عالية
+                            timeout: 10000, // 10 ثواني timeout
+                            maximumAge: 5000 // 5 ثواني cache
+                        }
+                    );
+                },
+                // Error في الطلب الأولي
+                (error) => {
+                    console.error('GPS Initial Error:', error);
+                    showNotification('خطأ', 'لا يمكن الوصول إلى GPS. تأكد من تفعيل الموقع وإعطاء الإذن.', 8000);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000
+                }
+            );
+        }
+        
+        // إيقاف تتبع موقع السائق
+        function stopDriverLocationTracking() {
+            if (driverLocationWatcher !== null) {
+                console.log('GPS: إيقاف التتبع...');
+                navigator.geolocation.clearWatch(driverLocationWatcher);
+                driverLocationWatcher = null;
+                
+                // حذف الموقع من Firebase
+                if (currentUser.driverId) {
+                    database.ref(`drivers/${currentUser.driverId}/location`).remove()
+                        .then(() => {
+                            console.log('GPS: تم حذف الموقع من Firebase ✅');
+                        })
+                        .catch((error) => {
+                            console.error('GPS: خطأ في حذف الموقع:', error);
+                        });
+                }
+                
+                showNotification('GPS', 'تم إيقاف تتبع الموقع', 3000);
+            }
+        }
+        
+        // ========================================
+        // تتبع موقع السائق للعميل
+        // ========================================
+        function trackDriverForCustomer(requestId, driverId) {
+            console.log(`تتبع السائق: ${driverId} للطلب: ${requestId}`);
+            activeRequestTracking = requestId;
+            
+            // الاستماع لموقع السائق
+            const driverLocationRef = database.ref(`drivers/${driverId}/location`);
+            
+            driverLocationRef.on('value', (snapshot) => {
+                const location = snapshot.val();
+                
+                if (location && activeRequestTracking === requestId) {
+                    const lat = location.lat;
+                    const lng = location.lng;
+                    const timestamp = location.timestamp;
+                    
+                    // التحقق من أن الموقع حديث (خلال آخر 30 ثانية)
+                    const now = Date.now();
+                    const age = now - timestamp;
+                    
+                    if (age > 30000) {
+                        console.log('تحذير: موقع السائق قديم (أكثر من 30 ثانية)');
+                    }
+                    
+                    console.log(`موقع السائق: ${lat}, ${lng} (عمر: ${Math.round(age/1000)}s)`);
+                    
+                    // تحديث أو إنشاء علامة السائق على الخريطة
+                    if (driverLocationMarker) {
+                        // تحديث الموقع بشكل سلس
+                        driverLocationMarker.setLatLng([lat, lng]);
+                    } else {
+                        // إنشاء علامة جديدة
+                        const driverIcon = L.divIcon({
+                            className: 'driver-location-icon',
+                            html: '<div style="font-size: 45px; animation: pulse 2s infinite; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));">🚕</div>',
+                            iconSize: [50, 50],
+                            iconAnchor: [25, 25]
+                        });
+                        
+                        driverLocationMarker = L.marker([lat, lng], { icon: driverIcon })
+                            .addTo(map)
+                            .bindPopup('<b>السائق في الطريق إليك</b><br>تحديث مباشر كل 5 ثواني');
+                        
+                        driverLocationMarker.openPopup();
+                    }
+                    
+                    // تحريك الخريطة لتظهر كل من موقع العميل والسائق
+                    if (userLocation) {
+                        const bounds = L.latLngBounds([
+                            [userLocation.lat, userLocation.lng],
+                            [lat, lng]
+                        ]);
+                        map.fitBounds(bounds, { padding: [80, 80] });
+                    } else {
+                        // إذا لم يكن لدينا موقع العميل، نركز على السائق
+                        map.setView([lat, lng], 15);
+                    }
+                } else if (!location && activeRequestTracking === requestId) {
+                    console.log('تحذير: لا يوجد موقع للسائق في قاعدة البيانات');
+                }
+            }, (error) => {
+                console.error('خطأ في تتبع السائق:', error);
+                showNotification('خطأ', 'حدث خطأ في تتبع موقع السائق', 5000);
+            });
+        }
+        
+        // إيقاف تتبع السائق
+        function stopTrackingDriver(driverId) {
+            console.log(`إيقاف تتبع السائق: ${driverId}`);
+            activeRequestTracking = null;
+            
+            // إيقاف الاستماع
+            database.ref(`drivers/${driverId}/location`).off();
+            
+            // حذف العلامة من الخريطة
+            if (driverLocationMarker) {
+                map.removeLayer(driverLocationMarker);
+                driverLocationMarker = null;
+                console.log('تم حذف علامة السائق من الخريطة');
+            }
+        }
+        
         // Password Hashing - تشفير كلمة السر
         function simpleHash(str) {
             let hash = 0;
@@ -1161,8 +1313,8 @@
         // لا يمكن رؤية كلمات السر الحقيقية في F12
         const AUTHORIZED_DRIVERS = [
             {
-                name:'محمد ابرهيم حسين ابو قصيدو',
-                passwordHash: '709064e3' // كلمة السر:  (مشفرة)
+                name: 'محمد عبد الله حسين ابو قصيدو',
+                passwordHash: '709064e3' // كلمة السر: 1234765 (مشفرة)
             },
             // لإضافة سائق جديد:
             // 1. استخدم الدالة المساعدة أدناه لحساب الـ Hash
@@ -1170,7 +1322,7 @@
         ];
         
         // كلمة سر المدير (مشفرة)
-        const ADMIN_PASSWORD_HASH = '24a4ccff'; // كلمة السر:  (مشفرة)
+        const ADMIN_PASSWORD_HASH = '24a4ccff'; // كلمة السر: 1234651 (مشفرة)
         
         // Verify Driver Login
         function verifyDriverLogin(name, password) {
@@ -1255,6 +1407,9 @@
         let userLocation = null;
         let pickupMap = null;
         let pickupMarker = null;
+        let driverLocationMarker = null; // علامة موقع السائق
+        let driverLocationWatcher = null; // مراقب موقع السائق
+        let activeRequestTracking = null; // الطلب النشط للتتبع
         
         // استعادة حالة السائق من localStorage عند تحميل الصفحة
         function restoreDriverState() {
@@ -1364,17 +1519,17 @@
             const phone = document.getElementById('driverPhone').value.trim();
             const password = document.getElementById('driverPassword').value;
             
+            // Validate phone
+            if (!/^05\d{8}$/.test(phone)) {
+                showNotification('خطأ', 'رقم الهاتف غير صحيح! يجب أن يبدأ بـ 05 ويحتوي على 10 أرقام');
+                return;
+            }
+            
             // التحقق من الاسم وكلمة السر
             const verification = verifyDriverLogin(name, password);
             
             if (!verification.success) {
                 showNotification('خطأ', verification.error);
-                return;
-            }
-            
-            // Validate phone
-            if (!/^05\d{8}$/.test(phone)) {
-                showNotification('خطأ', 'رقم الهاتف غير صحيح! يجب أن يبدأ بـ 05 ويحتوي على 10 أرقام');
                 return;
             }
             
@@ -1397,7 +1552,7 @@
                     name: name,
                     phone: phone,
                     online: true,
-                    lastSeen: firebase.database.ServerValue.TIMESTAMP,
+                    lastSeen: Date.now(),
                     joinedAt: new Date().toISOString()
                 });
                 
@@ -1408,7 +1563,10 @@
                 updateDriverUI();
                 listenToRequests();
                 
-                showNotification('مرحباً', `تم تسجيل دخولك كسائق: ${name}. ستظهر الآن في قائمة السائقين`);
+                // بدء تتبع GPS للسائق
+                startDriverLocationTracking();
+                
+                showNotification('مرحباً', `تم تسجيل دخولك كسائق: ${name}. GPS نشط الآن 📍`);
                 
             } catch (error) {
                 console.error('Error logging in driver:', error);
@@ -1565,10 +1723,13 @@
             showLoading();
             
             try {
+                // إيقاف تتبع GPS
+                stopDriverLocationTracking();
+                
                 // Update driver status to offline
                 await database.ref(`drivers/${currentUser.driverId}`).update({
                     online: false,
-                    lastSeen: firebase.database.ServerValue.TIMESTAMP
+                    lastSeen: Date.now()
                 });
                 
                 // حذف من localStorage
@@ -1825,6 +1986,9 @@
                         10000
                     );
                     
+                    // بدء تتبع موقع السائق
+                    trackDriverForCustomer(requestId, request.acceptedBy);
+                    
                     // صوت تنبيه نجاح
                     try {
                         const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGmz6eeXSwgNUKXi8LZkHAU5kdXzzHoqBSJ2xe/ekEEKFF+z6eirVhMJRp/g8b5uIQUrfs7y24o2Bw==');
@@ -1836,9 +2000,19 @@
                         `السائق ${request.driverName} في موقعك الآن`,
                         8000
                     );
+                    
+                    // إيقاف التتبع عند وصول السائق
+                    if (request.acceptedBy) {
+                        stopTrackingDriver(request.acceptedBy);
+                    }
                 } else if (request.status === 'completed' && !request.rated) {
                     // إظهار نظام التقييم
                     showRatingModal(requestId, request.driverName, request.acceptedBy);
+                    
+                    // إيقاف التتبع
+                    if (request.acceptedBy) {
+                        stopTrackingDriver(request.acceptedBy);
+                    }
                     
                     // إلغاء الاستماع بعد الاكتمال
                     database.ref(`requests/${requestId}`).off();
@@ -2020,7 +2194,7 @@
                             <button class="btn btn-accept" onclick="acceptRequest('${request.id}', '${request.phone}')">
                                 ✓ قبول
                             </button>
-                            <button class="btn btn-remove" onclick="removeRequest('${request.id}')">
+                            <button class="btn btn-reject" onclick="removeRequest('${request.id}')">
                                 × إزالة
                             </button>
                         </div>
@@ -2273,4 +2447,3 @@
     </script>
 </body>
 </html>
-
