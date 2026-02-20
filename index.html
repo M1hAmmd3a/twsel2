@@ -1031,16 +1031,16 @@
         /* Responsive */
         @media (max-width: 768px) {
             .hero-banner {
-                height: 120px;
+                height: 100px;
                 padding: 10px;
             }
             
             .banner-title {
-                font-size: 22px;
+                font-size: 20px;
             }
             
             .banner-subtitle {
-                font-size: 14px;
+                font-size: 13px;
             }
             
             .banner-features {
@@ -1048,28 +1048,163 @@
             }
             
             .header {
-                padding: 0 10px;
+                padding: 10px;
                 height: auto;
-                min-height: 70px;
+                min-height: 80px;
             }
             
             .logo {
+                font-size: 20px;
+            }
+            
+            .logo-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 22px;
+            }
+            
+            .btn {
+                padding: 14px 20px;
                 font-size: 16px;
             }
             
+            .btn-admin {
+                padding: 14px 20px;
+                font-size: 16px;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+                gap: 10px;
+                margin-top: 10px;
+            }
+            
             .map-container {
-                top: 200px;
+                top: 180px;
             }
             
             .btn-mail,
             .btn-toggle-panel {
-                top: 220px;
+                top: 190px;
+                padding: 14px 20px;
+                font-size: 16px;
             }
             
             .drivers-panel {
-                top: 220px;
+                top: 190px;
                 width: calc(100% - 20px);
-                max-width: 350px;
+                max-width: 100%;
+                left: 10px;
+                right: 10px;
+            }
+            
+            .modal-content {
+                padding: 30px 20px;
+                width: 95%;
+            }
+            
+            .modal-title {
+                font-size: 24px;
+            }
+            
+            .form-input {
+                padding: 16px;
+                font-size: 16px;
+            }
+            
+            .form-label {
+                font-size: 16px;
+                font-weight: 700;
+            }
+            
+            .btn-primary,
+            .btn-secondary {
+                padding: 16px;
+                font-size: 18px;
+            }
+            
+            .notification {
+                right: 10px;
+                left: 10px;
+                max-width: calc(100% - 20px);
+                top: 90px;
+            }
+            
+            .notification-title {
+                font-size: 18px;
+            }
+            
+            .notification-body {
+                font-size: 16px;
+            }
+            
+            .phone-gate-content {
+                padding: 30px 20px;
+            }
+            
+            .phone-gate-title {
+                font-size: 24px;
+            }
+            
+            .phone-gate-subtitle {
+                font-size: 16px;
+            }
+            
+            .phone-input {
+                font-size: 18px;
+                padding: 16px;
+            }
+            
+            .phone-prefix {
+                font-size: 18px;
+                padding: 16px 12px;
+            }
+            
+            .whatsapp-btn {
+                width: 70px;
+                height: 70px;
+                font-size: 36px;
+                bottom: 80px;
+            }
+            
+            .request-popup {
+                min-width: 100%;
+            }
+            
+            .request-info {
+                margin-bottom: 15px;
+            }
+            
+            .request-label {
+                font-size: 15px;
+                font-weight: 700;
+            }
+            
+            .request-value {
+                font-size: 17px;
+                font-weight: 600;
+            }
+            
+            .request-actions button {
+                padding: 14px;
+                font-size: 16px;
+            }
+            
+            .driver-card {
+                padding: 15px;
+            }
+            
+            .driver-name {
+                font-size: 17px;
+            }
+            
+            .driver-status {
+                font-size: 14px;
+            }
+            
+            .map-selector {
+                height: 250px;
             }
         }
         
@@ -1271,6 +1406,14 @@
                 <div class="admin-section">
                     <h3 class="admin-section-title">➕ إضافة طلب جديد</h3>
                     <form id="adminAddRequestForm">
+                        <div class="form-group">
+                            <label class="form-label">حدد موقع الانطلاق على الخريطة</label>
+                            <div id="adminPickupMap" class="map-selector"></div>
+                            <div class="location-display" id="adminLocationDisplay" style="display: none;">
+                                <span>📍</span>
+                                <span id="adminLocationText"></span>
+                            </div>
+                        </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                             <div class="form-group">
                                 <label class="form-label">رقم الهاتف</label>
@@ -1282,12 +1425,8 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">موقع الانطلاق</label>
+                            <label class="form-label">وصف موقع الانطلاق</label>
                             <input type="text" class="form-input" id="adminReqLocation" placeholder="وصف الموقع" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">السعر المقترح (شيكل)</label>
-                            <input type="number" class="form-input" id="adminReqPrice" placeholder="20" required>
                         </div>
                         <button type="submit" class="btn btn-primary" style="width: 100%;">
                             <span>➕</span>
@@ -1349,12 +1488,6 @@
                 <div class="form-group">
                     <label class="form-label">رقم الهاتف</label>
                     <input type="tel" class="form-input" id="phoneNumber" readonly>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">السعر المتوقع (شيكل)</label>
-                    <input type="number" class="form-input" id="expectedPrice" placeholder="20" min="5">
-                    <small style="color: #666; font-size: 13px;">السعر تقديري ويمكن التفاوض مع السائق</small>
                 </div>
                 
                 <div class="form-group">
@@ -1714,6 +1847,9 @@
         let userLocation = null;
         let pickupMap = null;
         let pickupMarker = null;
+        let adminPickupMap = null;
+        let adminPickupMarker = null;
+        let adminUserLocation = null;
         let driverLocationMarker = null;
         let driverLocationWatcher = null;
         let gpsUpdateInterval = null; // للتحديث كل 6 ثواني
@@ -1937,8 +2073,46 @@
                     .equalTo('completed')
                     .once('value');
                 document.getElementById('completedTripsCount').textContent = completedTripsSnapshot.numChildren();
+                
+                // تهيئة خريطة الإدارة
+                setTimeout(() => {
+                    initAdminPickupMap();
+                }, 500);
             } catch (error) {
                 console.error('Error updating admin stats:', error);
+            }
+        }
+        
+        // تهيئة خريطة إضافة الطلب من الإدارة
+        function initAdminPickupMap() {
+            if (!adminPickupMap) {
+                adminPickupMap = L.map('adminPickupMap').setView([32.3108, 35.0278], 13);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(adminPickupMap);
+                
+                adminPickupMap.on('click', (e) => {
+                    const lat = e.latlng.lat;
+                    const lng = e.latlng.lng;
+                    
+                    if (adminPickupMarker) {
+                        adminPickupMarker.setLatLng([lat, lng]);
+                    } else {
+                        adminPickupMarker = L.marker([lat, lng], { draggable: true }).addTo(adminPickupMap);
+                        
+                        adminPickupMarker.on('dragend', (e) => {
+                            const pos = e.target.getLatLng();
+                            adminUserLocation = { lat: pos.lat, lng: pos.lng };
+                            document.getElementById('adminLocationDisplay').style.display = 'flex';
+                            document.getElementById('adminLocationText').textContent = `${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`;
+                        });
+                    }
+                    
+                    adminUserLocation = { lat, lng };
+                    document.getElementById('adminLocationDisplay').style.display = 'flex';
+                    document.getElementById('adminLocationText').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                });
             }
         }
         
@@ -1971,10 +2145,14 @@
         document.getElementById('adminAddRequestForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            if (!adminUserLocation) {
+                showNotification('خطأ', 'الرجاء تحديد الموقع على الخريطة');
+                return;
+            }
+            
             const phone = document.getElementById('adminReqPhone').value.trim();
             const destination = document.getElementById('adminReqDestination').value.trim();
             const location = document.getElementById('adminReqLocation').value.trim();
-            const price = document.getElementById('adminReqPrice').value;
             
             showLoading();
             
@@ -1983,19 +2161,26 @@
                 
                 await database.ref(`requests/${requestId}`).set({
                     id: requestId,
-                    location: { lat: 32.3108, lng: 35.0278 },
+                    location: adminUserLocation,
                     locationDescription: location,
                     destination: destination,
                     phone: phone,
-                    price: parseFloat(price),
                     details: 'طلب من المكتب',
                     status: 'pending',
                     timestamp: firebase.database.ServerValue.TIMESTAMP,
                     createdAt: new Date().toISOString(),
-                    addedByAdmin: true
+                    addedByAdmin: true,
+                    notifiedNearby: false
                 });
                 
                 document.getElementById('adminAddRequestForm').reset();
+                document.getElementById('adminLocationDisplay').style.display = 'none';
+                if (adminPickupMarker) {
+                    adminPickupMap.removeLayer(adminPickupMarker);
+                    adminPickupMarker = null;
+                }
+                adminUserLocation = null;
+                
                 showNotification('تم', 'تم إضافة الطلب بنجاح');
                 updateAdminStats();
             } catch (error) {
@@ -2174,7 +2359,6 @@
             const locationDescription = document.getElementById('locationDescription').value.trim();
             const destination = document.getElementById('destination').value.trim();
             const phone = userPhone;
-            const price = document.getElementById('expectedPrice').value;
             const details = document.getElementById('requestDetails').value.trim();
             
             showLoading();
@@ -2188,7 +2372,6 @@
                     locationDescription: locationDescription || '',
                     destination: destination,
                     phone: phone,
-                    price: price ? parseFloat(price) : null,
                     details: details,
                     status: 'pending',
                     timestamp: firebase.database.ServerValue.TIMESTAMP,
@@ -2208,7 +2391,7 @@
                 }
                 userLocation = null;
                 
-                showNotification('تم', 'تم إرسال طلبك بنجاح!');
+                showNotification('تم', 'تم إرسال طلبك بنجاح! سيتم إخطارك عند قبول السائق');
                 
                 listenToMyRequest(requestId, phone);
                 
@@ -2327,6 +2510,11 @@
                 
                 if (!request) return;
                 
+                if (request.status === 'pending') {
+                    // عرض زر إلغاء الطلب
+                    showCancelRequestOption(requestId);
+                }
+                
                 if (request.status === 'accepted' && request.driverName) {
                     const phoneDisplay = request.showDriverPhone ? ` - ${request.driverPhone}` : '';
                     showNotification(
@@ -2335,7 +2523,11 @@
                         10000
                     );
                     
+                    // بدء تتبع موقع السائق مع تحديث كل 6 ثواني
                     trackDriverForCustomer(requestId, request.acceptedBy);
+                    
+                    // عرض زر إلغاء الطلب بعد القبول أيضاً
+                    showCancelRequestOption(requestId);
                     
                     try {
                         const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGmz6eeXSwgNUKXi8LZkHAU5kdXzzHoqBSJ2xe/ekEEKFF+z6eirVhMJRp/g8b5uIQUrfs7y24o2Bw==');
@@ -2359,14 +2551,93 @@
                     }
                     
                     database.ref(`requests/${requestId}`).off();
+                } else if (request.status === 'cancelled_by_customer') {
+                    showNotification('تم الإلغاء', 'تم إلغاء طلبك بنجاح', 5000);
+                    database.ref(`requests/${requestId}`).off();
+                    
+                    if (request.acceptedBy) {
+                        stopTrackingDriver(request.acceptedBy);
+                    }
                 }
                 
                 // عرض رسائل السائق
                 if (request.messages && request.messages.length > 0) {
                     const lastMessage = request.messages[request.messages.length - 1];
-                    showNotification('رسالة من السائق', lastMessage.text, 7000);
+                    if (lastMessage.from === 'driver') {
+                        showNotification('رسالة من السائق', lastMessage.text, 7000);
+                    }
                 }
             });
+        }
+        
+        // عرض زر إلغاء الطلب للمستخدم
+        function showCancelRequestOption(requestId) {
+            // التحقق من وجود الزر بالفعل
+            if (document.getElementById('cancelRequestBtn')) {
+                return;
+            }
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.id = 'cancelRequestBtn';
+            cancelBtn.className = 'btn btn-danger';
+            cancelBtn.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 1500; animation: pulse 2s infinite;';
+            cancelBtn.innerHTML = '<span>❌</span><span>إلغاء الطلب</span>';
+            
+            cancelBtn.onclick = () => {
+                if (confirm('هل أنت متأكد من إلغاء الطلب؟')) {
+                    cancelRequestByCustomer(requestId);
+                }
+            };
+            
+            document.body.appendChild(cancelBtn);
+        }
+        
+        // إلغاء الطلب من قبل المستخدم
+        async function cancelRequestByCustomer(requestId) {
+            showLoading();
+            
+            try {
+                const requestSnapshot = await database.ref(`requests/${requestId}`).once('value');
+                const request = requestSnapshot.val();
+                
+                if (!request) {
+                    showNotification('خطأ', 'الطلب غير موجود');
+                    hideLoading();
+                    return;
+                }
+                
+                // تحديث حالة الطلب
+                await database.ref(`requests/${requestId}`).update({
+                    status: 'cancelled_by_customer',
+                    cancelledAt: Date.now()
+                });
+                
+                // إذا كان هناك سائق قبل الطلب، إرسال إشعار له
+                if (request.acceptedBy) {
+                    await database.ref(`notifications/${request.acceptedBy}_${Date.now()}`).set({
+                        type: 'request_cancelled',
+                        requestId: requestId,
+                        message: `تم إلغاء الطلب من قبل العميل ${request.phone}`,
+                        timestamp: Date.now()
+                    });
+                    
+                    stopTrackingDriver(request.acceptedBy);
+                }
+                
+                // إزالة زر الإلغاء
+                const cancelBtn = document.getElementById('cancelRequestBtn');
+                if (cancelBtn) {
+                    cancelBtn.remove();
+                }
+                
+                showNotification('تم', 'تم إلغاء الطلب بنجاح');
+                
+            } catch (error) {
+                console.error('Error cancelling request:', error);
+                showNotification('خطأ', 'حدث خطأ أثناء إلغاء الطلب');
+            } finally {
+                hideLoading();
+            }
         }
         
         // Rating Modal
