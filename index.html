@@ -1281,14 +1281,30 @@
     
     .header-actions {
         width: 100%;
-        justify-content: center;
-        gap: 15px;
+        justify-content: space-between;
+        gap: 8px;
         margin-top: 12px;
+        display: flex;
+        flex-wrap: nowrap;
     }
     
     .header-actions .btn {
         flex: 1;
-        min-width: 140px;
+        min-width: 0;
+        padding: 14px 12px !important;
+        font-size: 15px !important;
+    }
+    
+    .btn-admin {
+        order: 1;
+    }
+    
+    .btn-secondary {
+        order: 2;
+    }
+    
+    .btn-primary {
+        order: 3;
     }
     
     /* تكبير الخريطة */
@@ -1653,15 +1669,14 @@
             <span class="online-indicator" id="onlineIndicator" style="display: none;"></span>
         </div>
         
-        <button class="btn btn-admin" id="adminBtn">
-            <span>⚙️</span>
-            <span>إدارة</span>
-        </button>
-        
         <div class="header-actions">
+            <button class="btn btn-admin" id="adminBtn">
+                <span>⚙️</span>
+                <span>إدارة</span>
+            </button>
             <button class="btn btn-secondary" id="driverBtn">
                 <span>👨‍💼</span>
-                <span>صاحب العمل</span>
+                <span>دخول</span>
             </button>
             <button class="btn btn-primary" id="requestBtn">
                 <span>🚖</span>
@@ -1806,6 +1821,10 @@
                     <form id="adminAddRequestForm">
                         <div class="form-group">
                             <label class="form-label">حدد موقع الانطلاق على الخريطة</label>
+                            <button type="button" class="btn btn-secondary" onclick="reloadAdminMap()" style="width: 100%; margin-bottom: 10px;">
+                                <span>🔄</span>
+                                <span>إعادة تحميل الخريطة</span>
+                            </button>
                             <div id="adminPickupMap" class="map-selector"></div>
                             <div class="location-display" id="adminLocationDisplay" style="display: none;">
                                 <span>📍</span>
@@ -2275,10 +2294,13 @@
             driverId: null,
             name: null,
             phone: null,
-            showPhone: true
+            showPhone: true,
+            isBooked: false // حالة الحجز
         };
         let requestMarkers = {};
         let userLocation = null;
+        let expandingCircles = {}; // دوائر التوسع لكل طلب
+        let circleIntervals = {}; // intervals للدوائر
         let pickupMap = null;
         let pickupMarker = null;
         let adminPickupMap = null;
@@ -2509,16 +2531,32 @@
                     .once('value');
                 document.getElementById('completedTripsCount').textContent = completedTripsSnapshot.numChildren();
                 
-                // تهيئة خريطة الإدارة
+                // تهيئة خريطة الإدارة - بعد التأكد من ظهور اللوحة
                 setTimeout(() => {
                     const mapElement = document.getElementById('adminPickupMap');
                     if (mapElement) {
                         console.log('✅ عنصر الخريطة موجود');
-                        initAdminPickupMap();
+                        
+                        // التأكد من أن اللوحة ظاهرة
+                        const adminPanel = document.getElementById('adminPanel');
+                        if (adminPanel && adminPanel.style.display !== 'none') {
+                            console.log('✅ لوحة الإدارة ظاهرة');
+                            initAdminPickupMap();
+                            
+                            // إعادة حساب حجم الخريطة بعد التهيئة
+                            setTimeout(() => {
+                                if (adminPickupMap) {
+                                    adminPickupMap.invalidateSize();
+                                    console.log('✅ تم تحديث حجم الخريطة');
+                                }
+                            }, 300);
+                        } else {
+                            console.error('❌ لوحة الإدارة غير ظاهرة!');
+                        }
                     } else {
                         console.error('❌ عنصر الخريطة غير موجود!');
                     }
-                }, 1000);
+                }, 1500);
             } catch (error) {
                 console.error('Error updating admin stats:', error);
             }
@@ -2556,6 +2594,33 @@
                 });
             }
         }
+        
+        // دالة لإعادة تحميل خريطة الإدارة
+        window.reloadAdminMap = function() {
+            console.log('🔄 إعادة تحميل خريطة الإدارة...');
+            
+            // حذف الخريطة القديمة إن وجدت
+            if (adminPickupMap) {
+                adminPickupMap.remove();
+                adminPickupMap = null;
+                adminPickupMarker = null;
+                console.log('✅ تم حذف الخريطة القديمة');
+            }
+            
+            // إنشاء خريطة جديدة
+            setTimeout(() => {
+                initAdminPickupMap();
+                
+                // إعادة حساب الحجم
+                setTimeout(() => {
+                    if (adminPickupMap) {
+                        adminPickupMap.invalidateSize();
+                        console.log('✅ تم إنشاء خريطة جديدة');
+                        showNotification('تم', 'تم إعادة تحميل الخريطة بنجاح');
+                    }
+                }, 300);
+            }, 100);
+        };
         
         async function loadAdminRequests() {
             const requestsList = document.getElementById('adminRequestsList');
@@ -2832,7 +2897,10 @@
                 }
                 userLocation = null;
                 
-                showNotification('تم', 'تم إرسال طلبك بنجاح! سيتم إخطارك عند قبول السائق');
+                showNotification('تم', 'تم إرسال طلبك بنجاح! جاري البحث عن أقرب تكسي...');
+                
+                // بدء نظام الدوائر المتوسعة
+                startExpandingCircleSearch(requestId, userLocation);
                 
                 listenToMyRequest(requestId, phone);
                 
@@ -2842,6 +2910,147 @@
                 hideLoading();
             }
         });
+        
+        // ========================================
+        // نظام الدوائر المتوسعة للبحث عن أقرب تكسي
+        // ========================================
+        function startExpandingCircleSearch(requestId, location) {
+            console.log(`🎯 بدء البحث بالدوائر المتوسعة للطلب: ${requestId}`);
+            
+            let radius = 100; // البداية من 100 متر
+            const maxRadius = 50000; // الحد الأقصى 50 كم
+            const radiusIncrement = 500; // زيادة 500 متر كل مرة
+            
+            // رسم الدائرة على الخريطة
+            const circle = L.circle([location.lat, location.lng], {
+                color: '#FF6B35',
+                fillColor: '#FF6B35',
+                fillOpacity: 0.15,
+                radius: radius,
+                weight: 2
+            }).addTo(map);
+            
+            expandingCircles[requestId] = circle;
+            
+            // دالة للبحث عن سائق داخل الدائرة
+            async function searchForDriver() {
+                try {
+                    const driversSnapshot = await database.ref('drivers')
+                        .orderByChild('online')
+                        .equalTo(true)
+                        .once('value');
+                    
+                    const drivers = driversSnapshot.val() || {};
+                    let nearestDriver = null;
+                    let minDistance = Infinity;
+                    
+                    for (const [driverId, driver] of Object.entries(drivers)) {
+                        // تخطي السائقين المحجوزين
+                        if (driver.isBooked) {
+                            console.log(`⏭️ تخطي السائق ${driver.name} (محجوز)`);
+                            continue;
+                        }
+                        
+                        if (driver.location) {
+                            const distance = calculateDistance(
+                                location.lat,
+                                location.lng,
+                                driver.location.lat,
+                                driver.location.lng
+                            ) * 1000; // تحويل لمتر
+                            
+                            if (distance <= radius && distance < minDistance) {
+                                nearestDriver = { driverId, driver, distance };
+                                minDistance = distance;
+                            }
+                        }
+                    }
+                    
+                    if (nearestDriver) {
+                        // وجدنا سائق!
+                        console.log(`✅ وجدنا سائق! ${nearestDriver.driver.name} على بعد ${Math.round(nearestDriver.distance)}م`);
+                        
+                        // إيقاف التوسع
+                        if (circleIntervals[requestId]) {
+                            clearInterval(circleIntervals[requestId]);
+                            delete circleIntervals[requestId];
+                        }
+                        
+                        // إرسال الطلب للسائق
+                        await sendRequestToDriver(requestId, nearestDriver.driverId, nearestDriver.driver);
+                        
+                        // حذف الدائرة بعد ثانية
+                        setTimeout(() => {
+                            if (expandingCircles[requestId]) {
+                                map.removeLayer(expandingCircles[requestId]);
+                                delete expandingCircles[requestId];
+                            }
+                        }, 1000);
+                        
+                        return true;
+                    }
+                    
+                    return false;
+                    
+                } catch (error) {
+                    console.error('خطأ في البحث عن سائق:', error);
+                    return false;
+                }
+            }
+            
+            // التوسع التدريجي
+            circleIntervals[requestId] = setInterval(async () => {
+                radius += radiusIncrement;
+                circle.setRadius(radius);
+                
+                console.log(`🔄 توسيع الدائرة: ${Math.round(radius)}م`);
+                
+                const found = await searchForDriver();
+                
+                if (found || radius >= maxRadius) {
+                    clearInterval(circleIntervals[requestId]);
+                    delete circleIntervals[requestId];
+                    
+                    if (!found) {
+                        console.log('❌ لم يتم العثور على سائق متاح');
+                        showNotification('تنبيه', 'لم يتم العثور على سائق قريب. الطلب متاح لجميع السائقين.');
+                        
+                        // حذف الدائرة
+                        if (expandingCircles[requestId]) {
+                            map.removeLayer(expandingCircles[requestId]);
+                            delete expandingCircles[requestId];
+                        }
+                    }
+                }
+            }, 1000); // كل ثانية
+            
+            // البحث الأول فوراً
+            searchForDriver();
+        }
+        
+        // إرسال الطلب لسائق معين
+        async function sendRequestToDriver(requestId, driverId, driver) {
+            try {
+                await database.ref(`requests/${requestId}`).update({
+                    targetDriver: driverId,
+                    targetDriverName: driver.name,
+                    sentToDriverAt: Date.now()
+                });
+                
+                // إرسال إشعار للسائق
+                await database.ref(`notifications/${driverId}_${Date.now()}`).set({
+                    type: 'new_request',
+                    requestId: requestId,
+                    message: `طلب جديد قريب منك!`,
+                    timestamp: Date.now()
+                });
+                
+                console.log(`📤 تم إرسال الطلب للسائق: ${driver.name}`);
+                
+            } catch (error) {
+                console.error('خطأ في إرسال الطلب للسائق:', error);
+            }
+        }
         
         // ========================================
         // Listen to Requests - نظام ذكي للإشعارات
@@ -3342,6 +3551,12 @@
                 return;
             }
             
+            // التحقق من أن السائق غير محجوز
+            if (currentUser.isBooked) {
+                showNotification('تنبيه', 'أنت محجوز حالياً! أشل الحجز أولاً');
+                return;
+            }
+            
             showLoading();
             
             try {
@@ -3368,6 +3583,15 @@
                 
                 const requestData = result.snapshot.val();
                 
+                // تفعيل الحجز
+                currentUser.isBooked = true;
+                await database.ref(`drivers/${currentUser.driverId}`).update({
+                    isBooked: true,
+                    bookedAt: Date.now()
+                });
+                
+                console.log('🔒 تم تفعيل الحجز للسائق');
+                
                 const tripId = `trip_${Date.now()}`;
                 await database.ref(`trips/${tripId}`).set({
                     requestId: requestId,
@@ -3375,13 +3599,15 @@
                     driverName: currentUser.name,
                     customerPhone: customerPhone,
                     destination: requestData.destination,
-                    price: requestData.price,
                     status: 'on_the_way',
                     createdAt: Date.now()
                 });
                 
                 map.closePopup();
-                showNotification('تم', `تم قبول الطلب - ${customerPhone}`);
+                showNotification('تم', `تم قبول الطلب - ${customerPhone}\n🔒 أنت الآن محجوز`);
+                
+                // عرض زر إشالة الحجز
+                showRemoveBookingButton();
                 
                 setTimeout(() => {
                     if (confirm(`هل تريد الاتصال بالعميل؟`)) {
@@ -3394,6 +3620,68 @@
                 hideLoading();
             }
         };
+        
+        // دالة إشالة الحجز
+        window.removeBooking = async function() {
+            if (!currentUser.isDriver || !currentUser.driverId) {
+                showNotification('خطأ', 'يجب تسجيل الدخول كسائق');
+                return;
+            }
+            
+            if (!currentUser.isBooked) {
+                showNotification('تنبيه', 'أنت غير محجوز حالياً');
+                return;
+            }
+            
+            if (!confirm('هل أنت متأكد من إشالة الحجز؟\nستتمكن من استقبال طلبات جديدة')) {
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                currentUser.isBooked = false;
+                await database.ref(`drivers/${currentUser.driverId}`).update({
+                    isBooked: false,
+                    unbookedAt: Date.now()
+                });
+                
+                console.log('🔓 تم إشالة الحجز - السائق متاح الآن');
+                showNotification('تم', '✅ تم إشالة الحجز\nأنت الآن متاح لاستقبال طلبات جديدة');
+                
+                // حذف زر الحجز
+                const bookingBtn = document.getElementById('removeBookingBtn');
+                if (bookingBtn) {
+                    bookingBtn.remove();
+                }
+                
+            } catch (error) {
+                console.error('خطأ في إشالة الحجز:', error);
+                showNotification('خطأ', 'حدث خطأ أثناء إشالة الحجز');
+            } finally {
+                hideLoading();
+            }
+        };
+        
+        // عرض زر إشالة الحجز
+        function showRemoveBookingButton() {
+            // حذف الزر القديم إن وجد
+            const oldBtn = document.getElementById('removeBookingBtn');
+            if (oldBtn) oldBtn.remove();
+            
+            const bookingBtn = document.createElement('button');
+            bookingBtn.id = 'removeBookingBtn';
+            bookingBtn.className = 'btn btn-danger';
+            bookingBtn.style.cssText = 'position: fixed; bottom: 30px; left: 30px; z-index: 2500; padding: 18px 30px; font-size: 18px; box-shadow: 0 4px 20px rgba(255, 71, 87, 0.5); animation: pulse 2s infinite;';
+            bookingBtn.innerHTML = '<span style="font-size: 24px;">🔓</span><span style="margin-right: 10px;">إشالة الحجز</span>';
+            
+            bookingBtn.onclick = () => {
+                window.removeBooking();
+            };
+            
+            document.body.appendChild(bookingBtn);
+            console.log('✅ تم إضافة زر إشالة الحجز');
+        }
         
         window.markAsArrived = async function(requestId) {
             showLoading();
