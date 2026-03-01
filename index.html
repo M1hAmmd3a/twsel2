@@ -1643,56 +1643,23 @@
 </head>
 <body>
     <!-- Phone Gate Modal -->
-    <div class="phone-gate-modal" id="phoneGateModal">
+    <div class="phone-gate-modal active" id="phoneGateModal">
         <div class="phone-gate-content">
             <div class="phone-gate-icon">🚕</div>
             <h1 class="phone-gate-title">مرحباً بك في تكسي طولكرم</h1>
             <p class="phone-gate-subtitle">للمتابعة، يرجى إدخال رقم هاتفك لضمان الجدية في التعامل</p>
-            <form id="phoneGateForm" onsubmit="return false;">
+            <form id="phoneGateForm">
                 <div class="phone-input-container">
                     <span class="phone-prefix">+970</span>
-                    <input type="tel" class="phone-input" id="gatePhone" placeholder="599123456" required maxlength="10" pattern="[0-9]{9,10}">
+                    <input type="tel" class="phone-input" id="gatePhone" placeholder="599123456" maxlength="10" pattern="[0-9]{9,10}">
                 </div>
-                <button type="button" class="btn btn-primary" style="width: 100%; font-size: 20px; padding: 18px;" onclick="handlePhoneSubmit()">
+                <button type="button" class="btn btn-primary" style="width: 100%; font-size: 20px; padding: 18px;" id="phoneSubmitBtn">
                     <span>✓</span>
                     <span>دخول</span>
                 </button>
             </form>
         </div>
     </div>
-
-    <script>
-    // يعمل فوراً قبل أي شيء آخر - التحقق من رقم الهاتف المحفوظ
-    (function() {
-        var savedPhone = localStorage.getItem('userPhone');
-        var modal = document.getElementById('phoneGateModal');
-        if (savedPhone && modal) {
-            modal.style.display = 'none';
-        } else if (modal) {
-            modal.style.display = 'flex';
-        }
-        
-        window.handlePhoneSubmit = function() {
-            var input = document.getElementById('gatePhone');
-            if (!input) return;
-            var phone = input.value.trim();
-            if (!/^[0-9]{9,10}$/.test(phone)) {
-                alert('الرجاء إدخال رقم هاتف صحيح (9-10 أرقام)');
-                return;
-            }
-            var fullPhone = phone.startsWith('0') ? phone : '0' + phone;
-            localStorage.setItem('userPhone', fullPhone);
-            var phoneEl = document.getElementById('phoneNumber');
-            if (phoneEl) phoneEl.value = fullPhone;
-            var modal = document.getElementById('phoneGateModal');
-            if (modal) modal.style.display = 'none';
-            // تحديث userPhone في التطبيق الرئيسي إذا كان محملاً
-            if (typeof window.appUserPhone !== 'undefined') {
-                window.appUserPhone = fullPhone;
-            }
-        };
-    })();
-    </script>
 
     <!-- Header -->
     <header class="header">
