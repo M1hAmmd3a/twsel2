@@ -17,31 +17,40 @@
         // ========================================
         let userPhone = localStorage.getItem('userPhone');
         
+        // التأكد من إخفاء نافذة الهاتف إذا كان الرقم محفوظاً
+        const phoneGateEl = document.getElementById('phoneGateModal');
         if (userPhone) {
-            document.getElementById('phoneGateModal').classList.remove('active');
+            if (phoneGateEl) phoneGateEl.style.display = 'none';
+            const phoneNumberEl = document.getElementById('phoneNumber');
+            if (phoneNumberEl) phoneNumberEl.value = userPhone;
+        } else {
+            // إظهار النافذة فقط إذا لم يكن الرقم محفوظاً
+            if (phoneGateEl) phoneGateEl.style.display = 'flex';
         }
         
-        document.getElementById('phoneGateForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const phone = document.getElementById('gatePhone').value.trim();
-            
+        // handlePhoneSubmit معرّفة في HTML script - نربطها هنا أيضاً لتحديث userPhone
+        window.handlePhoneSubmit = function() {
+            var input = document.getElementById('gatePhone');
+            if (!input) return;
+            var phone = input.value.trim();
             if (!/^[0-9]{9,10}$/.test(phone)) {
-                showNotification('خطأ', 'الرجاء إدخال رقم هاتف صحيح');
+                showNotification('خطأ', 'الرجاء إدخال رقم هاتف صحيح (9-10 أرقام)');
                 return;
             }
-            
-            const fullPhone = phone.startsWith('0') ? phone : '0' + phone;
+            var fullPhone = phone.startsWith('0') ? phone : '0' + phone;
             userPhone = fullPhone;
             localStorage.setItem('userPhone', fullPhone);
-            
-            document.getElementById('phoneGateModal').classList.remove('active');
-            document.getElementById('phoneNumber').value = fullPhone;
-            
-            showNotification('مرحباً', 'تم تسجيل دخولك بنجاح! 🎉');
-        });
+            var phoneEl = document.getElementById('phoneNumber');
+            if (phoneEl) phoneEl.value = fullPhone;
+            var modal = document.getElementById('phoneGateModal');
+            if (modal) modal.style.display = 'none';
+            showNotification('مرحباً 👋', `تم حفظ رقمك: ${fullPhone}`);
+        };
         
-        if (userPhone) {
-            document.getElementById('phoneNumber').value = userPhone;
+        // للتوافق مع الكود القديم - إذا كان هناك submit event listener قديم
+        var oldForm = document.getElementById('phoneGateForm');
+        if (oldForm) {
+            oldForm.onsubmit = function(e) { e.preventDefault(); return false; };
         }
         
         // ========================================
@@ -55,94 +64,90 @@
         });
         
         // ========================================
-        // GPS محسّن - يعمل على جميع الهواتف - تحديث كل 6 ثواني
+        // GPS - طلب الإذن مرة واحدة فقط
         // ========================================
-        function startDriverLocationTracking() {
-            if (!currentUser.isDriver || !currentUser.driverId) return;
-            
-            if (!('geolocation' in navigator)) {
-                showNotification('خطأ', 'متصفحك لا يدعم تحديد الموقع GPS');
+        let gpsPermissionGranted = false;
+        let _gpsPermissionPending = false;
+        let _gpsPermissionCallbacks = [];
+
+        function requestGPSPermissionOnce(callback) {
+            if (gpsPermissionGranted) {
+                if (callback) callback(true);
                 return;
             }
-            
-            const gpsOptions = {
-                enableHighAccuracy: true,
-                timeout: 30000,
-                maximumAge: 0
-            };
-            
-            // دالة لتحديث الموقع
-            function updateLocation() {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
-                        const accuracy = position.coords.accuracy;
-                        
-                        console.log(`GPS: تحديث الموقع - ${lat.toFixed(6)}, ${lng.toFixed(6)} (دقة: ${accuracy.toFixed(0)}m)`);
-                        
-                        if (currentUser.driverId) {
-                            database.ref(`drivers/${currentUser.driverId}/location`).set({
-                                lat: lat,
-                                lng: lng,
-                                accuracy: accuracy,
-                                timestamp: Date.now()
-                            }).then(() => {
-                                console.log('GPS: تم حفظ الموقع ✅');
-                            }).catch((error) => {
-                                console.error('GPS: خطأ في حفظ الموقع:', error);
-                            });
-                        }
-                    },
-                    (error) => {
-                        console.error('GPS Error:', error);
-                        let errorMessage = 'خطأ في GPS';
-                        
-                        switch(error.code) {
-                            case error.PERMISSION_DENIED:
-                                errorMessage = 'تم رفض إذن الموقع';
-                                break;
-                            case error.POSITION_UNAVAILABLE:
-                                errorMessage = 'لا يمكن تحديد الموقع';
-                                break;
-                            case error.TIMEOUT:
-                                errorMessage = 'انتهت مهلة تحديد الموقع';
-                                break;
-                        }
-                        console.error('GPS:', errorMessage);
-                    },
-                    gpsOptions
-                );
+            if (_gpsPermissionPending) {
+                if (callback) _gpsPermissionCallbacks.push(callback);
+                return;
             }
+            _gpsPermissionPending = true;
+            if (callback) _gpsPermissionCallbacks.push(callback);
             
-            // محاولة الحصول على الموقع أولاً
             navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    console.log('GPS: تم الحصول على الإذن ✅');
-                    showNotification('GPS نشط', 'تم تفعيل تتبع موقعك (تحديث كل 6 ثواني) 📍', 3000);
-                    
-                    // تحديث الموقع أول مرة
-                    updateLocation();
-                    
-                    // بدء التحديث كل 6 ثواني
-                    gpsUpdateInterval = setInterval(() => {
-                        if (currentUser.isDriver && currentUser.driverId) {
-                            updateLocation();
-                        } else {
-                            // إيقاف التحديث إذا لم يعد السائق نشطاً
-                            if (gpsUpdateInterval) {
-                                clearInterval(gpsUpdateInterval);
-                                gpsUpdateInterval = null;
-                            }
-                        }
-                    }, 6000); // 6 ثواني
+                (pos) => {
+                    gpsPermissionGranted = true;
+                    _gpsPermissionPending = false;
+                    _gpsPermissionCallbacks.forEach(cb => cb(true, pos));
+                    _gpsPermissionCallbacks = [];
                 },
-                (error) => {
-                    console.error('GPS Initial Error:', error);
-                    showNotification('تنبيه GPS', 'الرجاء السماح بالوصول للموقع في إعدادات المتصفح', 8000);
+                (err) => {
+                    _gpsPermissionPending = false;
+                    _gpsPermissionCallbacks.forEach(cb => cb(false));
+                    _gpsPermissionCallbacks = [];
                 },
-                gpsOptions
+                { enableHighAccuracy: true, timeout: 30000, maximumAge: 5000 }
             );
+        }
+
+        function saveDriverLocationToFirebase(lat, lng, accuracy) {
+            if (!currentUser.driverId) return;
+            database.ref(`drivers/${currentUser.driverId}/location`).set({
+                lat, lng,
+                accuracy: accuracy || 0,
+                timestamp: Date.now()
+            }).catch(err => console.error('GPS save error:', err));
+        }
+
+        function startGPSInterval() {
+            if (gpsUpdateInterval) {
+                clearInterval(gpsUpdateInterval);
+                gpsUpdateInterval = null;
+            }
+            const opts = { enableHighAccuracy: true, timeout: 25000, maximumAge: 3000 };
+            gpsUpdateInterval = setInterval(() => {
+                if (!currentUser.isDriver || !currentUser.driverId) {
+                    clearInterval(gpsUpdateInterval);
+                    gpsUpdateInterval = null;
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => saveDriverLocationToFirebase(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
+                    (err) => console.warn('GPS interval:', err.message),
+                    opts
+                );
+            }, 6000);
+        }
+
+        function startDriverLocationTracking() {
+            if (!currentUser.isDriver || !currentUser.driverId) return;
+            if (!('geolocation' in navigator)) {
+                showNotification('خطأ', 'متصفحك لا يدعم GPS');
+                return;
+            }
+            if (gpsPermissionGranted) {
+                startGPSInterval();
+                showNotification('GPS نشط 📍', 'تتبع موقعك يعمل', 3000);
+                return;
+            }
+            showNotification('GPS', 'يرجى السماح بالوصول إلى موقعك 📍', 6000);
+            requestGPSPermissionOnce((granted, pos) => {
+                if (granted) {
+                    if (pos) saveDriverLocationToFirebase(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+                    startGPSInterval();
+                    showNotification('GPS نشط 📍', 'تم تفعيل تتبع موقعك (كل 6 ثواني)', 4000);
+                } else {
+                    showNotification('تنبيه GPS ⚠️', 'افتح إعدادات المتصفح وامنح إذن الموقع', 8000);
+                }
+            });
         }
         
         function stopDriverLocationTracking() {
@@ -174,85 +179,76 @@
         }
         
         // ========================================
-        // تتبع السائق للزبون - محسّن
-        // ========================================
-        // ========================================
-        // تتبع موقع السائق للزبون - تحديث كل 6 ثواني
+        // تتبع موقع السائق للزبون - real-time listener + تحديث كل 6 ثواني
         // ========================================
         function trackDriverForCustomer(requestId, driverId) {
             console.log(`تتبع السائق: ${driverId}`);
             activeRequestTracking = requestId;
-            
-            // دالة لتحديث موقع السائق
-            function updateDriverLocation() {
-                database.ref(`drivers/${driverId}/location`).once('value', (snapshot) => {
-                    const location = snapshot.val();
-                    
-                    if (location && activeRequestTracking === requestId) {
-                        const lat = location.lat;
-                        const lng = location.lng;
-                        const timestamp = location.timestamp;
-                        
-                        // التحقق من أن الموقع حديث
-                        const now = Date.now();
-                        const age = now - timestamp;
-                        
-                        console.log(`موقع السائق: ${lat.toFixed(6)}, ${lng.toFixed(6)} (عمر: ${Math.round(age/1000)}s)`);
-                        
-                        if (driverLocationMarker) {
-                            driverLocationMarker.setLatLng([lat, lng]);
-                        } else {
-                            const driverIcon = L.divIcon({
-                                className: 'driver-location-icon',
-                                html: '<div style="font-size: 50px; animation: pulse 2s infinite; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));">🚕</div>',
-                                iconSize: [60, 60],
-                                iconAnchor: [30, 30]
-                            });
-                            
-                            driverLocationMarker = L.marker([lat, lng], { icon: driverIcon })
-                                .addTo(map)
-                                .bindPopup('<b>🚕 السائق في الطريق إليك</b><br>📍 تحديث مباشر كل 6 ثواني');
-                            
-                            driverLocationMarker.openPopup();
-                        }
-                        
-                        if (userLocation) {
-                            const bounds = L.latLngBounds([
-                                [userLocation.lat, userLocation.lng],
-                                [lat, lng]
-                            ]);
-                            map.fitBounds(bounds, { padding: [100, 100] });
-                        } else {
-                            map.setView([lat, lng], 15);
-                        }
-                    }
-                });
+
+            // إيقاف أي تتبع قديم
+            if (customerTrackingInterval) {
+                clearInterval(customerTrackingInterval);
+                customerTrackingInterval = null;
             }
             
-            // التحديث الأول فوراً
-            updateDriverLocation();
-            
-            // ثم كل 6 ثواني
-            customerTrackingInterval = setInterval(() => {
-                if (activeRequestTracking === requestId) {
-                    updateDriverLocation();
+            // دالة لتحديث موقع السائق على الخريطة
+            function updateDriverMarker(location) {
+                if (!location || activeRequestTracking !== requestId) return;
+                const lat = location.lat;
+                const lng = location.lng;
+                
+                if (driverLocationMarker) {
+                    driverLocationMarker.setLatLng([lat, lng]);
                 } else {
-                    if (customerTrackingInterval) {
-                        clearInterval(customerTrackingInterval);
-                        customerTrackingInterval = null;
-                    }
+                    const driverIcon = L.divIcon({
+                        className: 'driver-location-icon',
+                        html: '<div style="font-size: 50px; filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));">🚕</div>',
+                        iconSize: [60, 60],
+                        iconAnchor: [30, 30]
+                    });
+                    
+                    driverLocationMarker = L.marker([lat, lng], { icon: driverIcon })
+                        .addTo(map)
+                        .bindPopup('<b>🚕 السائق في الطريق إليك</b><br>📍 تحديث مباشر كل 6 ثواني');
+                    
+                    driverLocationMarker.openPopup();
                 }
-            }, 6000); // 6 ثواني
+                
+                if (userLocation) {
+                    const bounds = L.latLngBounds([
+                        [userLocation.lat, userLocation.lng],
+                        [lat, lng]
+                    ]);
+                    map.fitBounds(bounds, { padding: [100, 100] });
+                } else {
+                    map.setView([lat, lng], 15);
+                }
+            }
+
+            // استخدام real-time listener بدلاً من polling
+            database.ref(`drivers/${driverId}/location`).on('value', (snapshot) => {
+                if (activeRequestTracking !== requestId) return;
+                const location = snapshot.val();
+                if (location) {
+                    console.log(`موقع السائق (real-time): ${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}`);
+                    updateDriverMarker(location);
+                }
+            });
         }
         
         function stopTrackingDriver(driverId) {
             console.log(`إيقاف تتبع السائق: ${driverId}`);
             activeRequestTracking = null;
             
-            // إيقاف التحديث الدوري
+            // إيقاف التحديث الدوري إن وجد
             if (customerTrackingInterval) {
                 clearInterval(customerTrackingInterval);
                 customerTrackingInterval = null;
+            }
+
+            // إيقاف الـ real-time listener
+            if (driverId) {
+                database.ref(`drivers/${driverId}/location`).off();
             }
             
             // حذف العلامة من الخريطة
@@ -381,6 +377,14 @@
                         database.ref(`drivers/${currentUser.driverId}/online`).once('value', (snapshot) => {
                             if (!snapshot.val()) {
                                 logoutDriver();
+                            } else {
+                                // استعادة زر الحجز وعداد الطلبات إذا كان محجوزاً
+                                if (currentUser.isBooked) {
+                                    showRemoveBookingButton();
+                                    if (currentUser.activeRequestId && currentUser.activeCustomerPhone) {
+                                        showDriverChatPanel(currentUser.activeRequestId, currentUser.activeCustomerPhone);
+                                    }
+                                }
                             }
                         });
                     }
@@ -947,6 +951,9 @@
                 document.getElementById('requestForm').reset();
                 document.getElementById('locationDisplay').style.display = 'none';
                 
+                // حفظ الموقع قبل تصفيره
+                const savedLocation = { ...userLocation };
+                
                 if (pickupMarker) {
                     pickupMap.removeLayer(pickupMarker);
                     pickupMarker = null;
@@ -955,10 +962,10 @@
                 
                 showNotification('تم', 'تم إرسال طلبك بنجاح! جاري البحث عن أقرب تكسي...');
                 
-                // بدء نظام الدوائر المتوسعة
-                startExpandingCircleSearch(requestId, userLocation);
+                // بدء نظام الدوائر المتوسعة بالموقع المحفوظ
+                startExpandingCircleSearch(requestId, savedLocation);
                 
-                listenToMyRequest(requestId, phone);
+                listenToMyRequestFixed(requestId, phone);
                 
             } catch (error) {
                 showNotification('خطأ', 'حدث خطأ أثناء إرسال الطلب');
@@ -1607,46 +1614,47 @@
                 return;
             }
             
-            // التحقق من أن السائق غير محجوز
+            // لا يقبل طلبات جديدة إذا كان محجوزاً
             if (currentUser.isBooked) {
-                showNotification('تنبيه', 'أنت محجوز حالياً! أشل الحجز أولاً');
+                showNotification('تنبيه 🔒', 'أنت محجوز حالياً! أشل الحجز أولاً');
                 return;
             }
             
             showLoading();
             
             try {
-                const result = await database.ref(`requests/${requestId}`).transaction((current) => {
-                    if (!current || current.status !== 'pending') {
-                        return;
-                    }
-                    
-                    current.status = 'accepted';
-                    current.acceptedBy = currentUser.driverId;
-                    current.driverName = currentUser.name;
-                    current.driverPhone = currentUser.phone;
-                    current.showDriverPhone = currentUser.showPhone;
-                    current.acceptedAt = Date.now();
-                    
-                    return current;
-                });
+                // التحقق من حالة الطلب
+                const requestSnapshot = await database.ref(`requests/${requestId}`).once('value');
+                const currentRequest = requestSnapshot.val();
                 
-                if (!result.committed) {
+                if (!currentRequest || currentRequest.status !== 'pending') {
                     showNotification('تنبيه', 'تم قبول هذا الطلب من سائق آخر');
                     hideLoading();
                     return;
                 }
                 
-                const requestData = result.snapshot.val();
-                
-                // تفعيل الحجز
-                currentUser.isBooked = true;
-                await database.ref(`drivers/${currentUser.driverId}`).update({
-                    isBooked: true,
-                    bookedAt: Date.now()
+                // تحديث الطلب في Firebase
+                await database.ref(`requests/${requestId}`).update({
+                    status: 'accepted',
+                    acceptedBy: currentUser.driverId,
+                    driverName: currentUser.name,
+                    driverPhone: currentUser.phone,
+                    showDriverPhone: currentUser.showPhone !== false,
+                    acceptedAt: Date.now()
                 });
                 
-                console.log('🔒 تم تفعيل الحجز للسائق');
+                // تفعيل الحجز + تحديث Firebase ليظهر "محجوز" لجميع السائقين
+                currentUser.isBooked = true;
+                currentUser.activeRequestId = requestId;
+                currentUser.activeCustomerPhone = customerPhone;
+                localStorage.setItem('currentDriver', JSON.stringify(currentUser));
+
+                await database.ref(`drivers/${currentUser.driverId}`).update({
+                    isBooked: true,
+                    bookedAt: Date.now(),
+                    activeRequestId: requestId,
+                    // isBooked=true يظهر للجميع في Firebase ← السائقون الآخرون يرون أنه محجوز
+                });
                 
                 const tripId = `trip_${Date.now()}`;
                 await database.ref(`trips/${tripId}`).set({
@@ -1654,30 +1662,53 @@
                     driverId: currentUser.driverId,
                     driverName: currentUser.name,
                     customerPhone: customerPhone,
-                    destination: requestData.destination,
+                    destination: currentRequest.destination,
                     status: 'on_the_way',
                     createdAt: Date.now()
                 });
                 
                 map.closePopup();
-                showNotification('تم', `تم قبول الطلب - ${customerPhone}\n🔒 أنت الآن محجوز`);
+                showNotification('تم قبول الطلب ✅', `العميل: ${customerPhone}\n🔒 أنت الآن محجوز - لن تصلك طلبات جديدة`);
                 
-                // عرض زر إشالة الحجز
+                // عرض زر إشالة الحجز في اليسار
                 showRemoveBookingButton();
                 
+                // عرض لوحة التواصل مع العميل
+                showDriverChatPanel(requestId, customerPhone);
+                
+                // تشغيل GPS وإظهار السائق على الخريطة فوراً
+                // إذا الإذن ممنوح: ابدأ فوراً | إذا لا: اطلبه مرة واحدة
+                if (gpsPermissionGranted) {
+                    startGPSInterval();
+                    showNotification('📍 GPS', 'موقعك يظهر الآن للعميل', 3000);
+                } else {
+                    requestGPSPermissionOnce((granted, pos) => {
+                        if (granted) {
+                            if (pos) saveDriverLocationToFirebase(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+                            startGPSInterval();
+                            showNotification('📍 GPS نشط', 'موقعك يظهر الآن للعميل (تحديث كل 6 ثواني)', 4000);
+                        } else {
+                            showNotification('تنبيه GPS ⚠️', 'لم يتم منح إذن الموقع - لن يتمكن العميل من تتبعك', 8000);
+                        }
+                    });
+                }
+
+                // سؤال عن الاتصال بعد ثانية
                 setTimeout(() => {
-                    if (confirm(`هل تريد الاتصال بالعميل؟`)) {
+                    if (confirm(`هل تريد الاتصال بالعميل ${customerPhone}؟`)) {
                         window.location.href = `tel:${customerPhone}`;
                     }
-                }, 1000);
+                }, 1500);
+                
             } catch (error) {
-                showNotification('خطأ', 'حدث خطأ');
+                console.error('❌ خطأ في قبول الطلب:', error);
+                showNotification('خطأ', 'حدث خطأ: ' + error.message);
             } finally {
                 hideLoading();
             }
         };
         
-        // دالة إشالة الحجز
+        // دالة إشالة الحجز - تختفي من الخريطة وتوقف التواصل
         window.removeBooking = async function() {
             if (!currentUser.isDriver || !currentUser.driverId) {
                 showNotification('خطأ', 'يجب تسجيل الدخول كسائق');
@@ -1689,27 +1720,51 @@
                 return;
             }
             
-            if (!confirm('هل أنت متأكد من إشالة الحجز؟\nستتمكن من استقبال طلبات جديدة')) {
+            if (!confirm('إشالة الحجز؟\nسيتم:\n• حذف موقعك من الخريطة\n• إغلاق التواصل مع العميل\n• إتاحتك لطلبات جديدة')) {
                 return;
             }
             
             showLoading();
             
             try {
+                const prevRequestId = currentUser.activeRequestId;
+                
+                // إيقاف GPS وحذف الموقع من Firebase (الاختفاء من الخريطة)
+                stopDriverLocationTracking();
+                
+                // تحديث بيانات السائق في Firebase
                 currentUser.isBooked = false;
+                currentUser.activeRequestId = null;
+                currentUser.activeCustomerPhone = null;
+                localStorage.setItem('currentDriver', JSON.stringify(currentUser));
+
                 await database.ref(`drivers/${currentUser.driverId}`).update({
                     isBooked: false,
-                    unbookedAt: Date.now()
+                    unbookedAt: Date.now(),
+                    activeRequestId: null
                 });
                 
-                console.log('🔓 تم إشالة الحجز - السائق متاح الآن');
-                showNotification('تم', '✅ تم إشالة الحجز\nأنت الآن متاح لاستقبال طلبات جديدة');
+                // حذف موقعه نهائياً من Firebase (يختفي من الخريطة)
+                await database.ref(`drivers/${currentUser.driverId}/location`).remove();
+                
+                showNotification('تم ✅', 'تم إشالة الحجز\nاختفيت من الخريطة\nأنت متاح لطلبات جديدة');
                 
                 // حذف زر الحجز
                 const bookingBtn = document.getElementById('removeBookingBtn');
-                if (bookingBtn) {
-                    bookingBtn.remove();
+                if (bookingBtn) bookingBtn.remove();
+
+                // إغلاق لوحة التواصل وإيقاف listener الرسائل
+                const chatPanel = document.getElementById('driverChatPanel');
+                if (chatPanel) {
+                    // إيقاف listener الرسائل
+                    if (prevRequestId) {
+                        database.ref(`requests/${prevRequestId}/messages`).off();
+                    }
+                    chatPanel.remove();
                 }
+                
+                // إعادة تشغيل GPS بدون حفظ في Firebase (استعداد للطلب القادم)
+                // لا نبدأ التتبع إلا عند قبول طلب جديد
                 
             } catch (error) {
                 console.error('خطأ في إشالة الحجز:', error);
@@ -1721,23 +1776,104 @@
         
         // عرض زر إشالة الحجز
         function showRemoveBookingButton() {
-            // حذف الزر القديم إن وجد
             const oldBtn = document.getElementById('removeBookingBtn');
             if (oldBtn) oldBtn.remove();
             
-            const bookingBtn = document.createElement('button');
-            bookingBtn.id = 'removeBookingBtn';
-            bookingBtn.className = 'btn btn-danger';
-            bookingBtn.style.cssText = 'position: fixed; bottom: 30px; left: 30px; z-index: 2500; padding: 18px 30px; font-size: 18px; box-shadow: 0 4px 20px rgba(255, 71, 87, 0.5); animation: pulse 2s infinite;';
-            bookingBtn.innerHTML = '<span style="font-size: 24px;">🔓</span><span style="margin-right: 10px;">إشالة الحجز</span>';
+            // حاوية الأزرار
+            const container = document.createElement('div');
+            container.id = 'removeBookingBtn';
+            container.style.cssText = 'position: fixed; bottom: 30px; left: 10px; z-index: 2500; display: flex; flex-direction: column; gap: 8px;';
             
-            bookingBtn.onclick = () => {
-                window.removeBooking();
+            // زر إشالة الحجز (رئيسي)
+            const bookingBtn = document.createElement('button');
+            bookingBtn.className = 'btn btn-danger';
+            bookingBtn.style.cssText = 'padding: 15px 22px; font-size: 16px; box-shadow: 0 4px 20px rgba(255,71,87,0.5); animation: pulse 2s infinite; white-space: nowrap;';
+            bookingBtn.innerHTML = '🔓 إشالة الحجز';
+            bookingBtn.onclick = () => window.removeBooking();
+            
+            // زر إخفاء نفسي من الخريطة (ثانوي)
+            const hideBtn = document.createElement('button');
+            hideBtn.className = 'btn btn-secondary';
+            hideBtn.style.cssText = 'padding: 12px 22px; font-size: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); white-space: nowrap;';
+            hideBtn.innerHTML = '🗺️ إخفاء موقعي';
+            hideBtn.onclick = async () => {
+                if (confirm('هل تريد إخفاء موقعك من الخريطة مؤقتاً؟')) {
+                    if (gpsUpdateInterval) {
+                        clearInterval(gpsUpdateInterval);
+                        gpsUpdateInterval = null;
+                    }
+                    await database.ref(`drivers/${currentUser.driverId}/location`).remove();
+                    hideBtn.innerHTML = '📍 إظهار موقعي';
+                    hideBtn.onclick = () => {
+                        if (gpsPermissionGranted) startGPSInterval();
+                        hideBtn.innerHTML = '🗺️ إخفاء موقعي';
+                        hideBtn.onclick = arguments.callee;
+                    };
+                    showNotification('تم', 'تم إخفاء موقعك من الخريطة مؤقتاً', 3000);
+                }
             };
             
-            document.body.appendChild(bookingBtn);
-            console.log('✅ تم إضافة زر إشالة الحجز');
+            container.appendChild(bookingBtn);
+            container.appendChild(hideBtn);
+            document.body.appendChild(container);
         }
+
+        // ========================================
+        // لوحة التواصل بين السائق والزبون
+        // ========================================
+        function showDriverChatPanel(requestId, customerPhone) {
+            // حذف اللوحة القديمة إن وجدت
+            const oldPanel = document.getElementById('driverChatPanel');
+            if (oldPanel) oldPanel.remove();
+
+            const panel = document.createElement('div');
+            panel.id = 'driverChatPanel';
+            panel.style.cssText = 'position: fixed; bottom: 110px; left: 30px; z-index: 2400; background: white; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); width: 300px; overflow: hidden; font-family: Tajawal, sans-serif;';
+            panel.innerHTML = `
+                <div style="background: linear-gradient(135deg, #1A1A2E 0%, #004E89 100%); color: white; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 700; font-size: 15px;">💬 تواصل مع العميل ${customerPhone}</span>
+                    <button onclick="document.getElementById('driverChatPanel').style.display='none'" style="background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 16px;">×</button>
+                </div>
+                <div id="driverChatMessages" style="max-height: 150px; overflow-y: auto; padding: 10px; background: #f8f9fa;"></div>
+                <div style="padding: 10px; display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid #eee;">
+                    <button class="quick-msg-btn" onclick="sendDriverMessage('${requestId}', 'أنا في الطريق إليك 🚕')">🚕 في الطريق</button>
+                    <button class="quick-msg-btn" onclick="sendDriverMessage('${requestId}', 'سأصل خلال 5 دقائق ⏱️')">⏱️ 5 دقائق</button>
+                    <button class="quick-msg-btn" onclick="sendDriverMessage('${requestId}', 'أنا بعيد قليلاً، انتظرني 🙏')">🙏 بعيد قليلاً</button>
+                    <button class="quick-msg-btn" onclick="sendDriverMessage('${requestId}', 'وصلت، أنا بانتظارك ✅')">✅ وصلت</button>
+                </div>
+            `;
+            document.body.appendChild(panel);
+
+            // الاستماع للرسائل الجديدة
+            database.ref(`requests/${requestId}/messages`).on('value', (snapshot) => {
+                const messages = snapshot.val() || [];
+                const chatDiv = document.getElementById('driverChatMessages');
+                if (!chatDiv) return;
+                chatDiv.innerHTML = messages.slice(-5).map(msg => `
+                    <div style="padding: 6px 10px; margin-bottom: 6px; border-radius: 8px; background: ${msg.from === 'driver' ? '#e3f2fd' : 'white'}; border-left: 3px solid ${msg.from === 'driver' ? '#004E89' : '#FF6B35'}; font-size: 13px;">
+                        <div>${msg.text}</div>
+                        <div style="font-size: 11px; color: #999; margin-top: 3px;">${msg.from === 'driver' ? '👨‍💼 أنت' : '👤 العميل'} - ${new Date(msg.timestamp).toLocaleTimeString('ar')}</div>
+                    </div>
+                `).join('');
+                chatDiv.scrollTop = chatDiv.scrollHeight;
+            });
+        }
+
+        window.sendDriverMessage = async function(requestId, message) {
+            try {
+                const messagesRef = database.ref(`requests/${requestId}/messages`);
+                const snapshot = await messagesRef.once('value');
+                const messages = snapshot.val() || [];
+                messages.push({
+                    text: message,
+                    timestamp: Date.now(),
+                    from: 'driver'
+                });
+                await messagesRef.set(messages);
+            } catch (error) {
+                showNotification('خطأ', 'حدث خطأ في إرسال الرسالة');
+            }
+        };
         
         window.markAsArrived = async function(requestId) {
             showLoading();
@@ -1825,51 +1961,13 @@
             }
         });
         
-        
+
 
 // ==========================================
-// إصلاح 1: حفظ واستعادة رقم الهاتف تلقائياً
-// ==========================================
-(function() {
-    // استعادة الرقم عند تحميل الصفحة
-    const savedPhone = localStorage.getItem('userPhone');
-    if (savedPhone) {
-        userPhone = savedPhone;
-        const phoneField = document.getElementById('phoneNumber');
-        if (phoneField) {
-            phoneField.value = savedPhone;
-            phoneField.removeAttribute('readonly'); // جعله قابل للتعديل
-        }
-        
-        // إخفاء شاشة إدخال الرقم
-        const phoneGate = document.getElementById('phoneGateModal');
-        if (phoneGate) {
-            phoneGate.classList.remove('active');
-        }
-    }
-    
-    // حفظ الرقم عند التغيير
-    const phoneNumberField = document.getElementById('phoneNumber');
-    if (phoneNumberField) {
-        phoneNumberField.removeAttribute('readonly');
-        phoneNumberField.addEventListener('change', function() {
-            const phone = this.value.trim();
-            if (phone) {
-                localStorage.setItem('userPhone', phone);
-                userPhone = phone;
-                console.log('✅ تم حفظ رقم الهاتف:', phone);
-            }
-        });
-    }
-})();
-
-// ==========================================
-// إصلاح 2: إظهار جميع الطلبات للسائقين مباشرة
+// إظهار جميع الطلبات للسائقين (إلا المحجوزين)
 // ==========================================
 function listenToRequestsFixed() {
-    console.log('🔄 بدء الاستماع للطلبات...');
     
-    // الاستماع لجميع الطلبات المعلقة بدون تأخير
     database.ref('requests')
         .orderByChild('status')
         .equalTo('pending')
@@ -1889,14 +1987,12 @@ function listenToRequestsFixed() {
             
             let pendingCount = 0;
             
-            // إضافة جميع الطلبات المعلقة فوراً
             Object.keys(requests).forEach(requestId => {
                 const request = requests[requestId];
                 
                 if (request.status === 'pending') {
                     pendingCount++;
                     
-                    // إضافة علامة على الخريطة مباشرة
                     if (!requestMarkers[requestId]) {
                         const marker = L.marker(
                             [request.location.lat, request.location.lng], 
@@ -1909,8 +2005,8 @@ function listenToRequestsFixed() {
                         
                         requestMarkers[requestId] = marker;
                         
-                        // إظهار إشعار للسائقين
-                        if (currentUser.isDriver) {
+                        // إظهار إشعار للسائقين غير المحجوزين فقط
+                        if (currentUser.isDriver && !currentUser.isBooked) {
                             console.log('🚨 طلب جديد:', request.destination);
                             showNotification(
                                 '🚨 طلب جديد!',
@@ -1918,7 +2014,6 @@ function listenToRequestsFixed() {
                                 8000
                             );
                             
-                            // صوت تنبيه
                             try {
                                 const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGmz6eeXSwgNUKXi8LZkHAU5kdXzzHoqBSJ2xe/ekEEKFF+z6eirVhMJRp/g8b5uIQUrfs7y24o2Bw==');
                                 audio.play().catch(() => {});
@@ -1928,15 +2023,17 @@ function listenToRequestsFixed() {
                 }
             });
             
-            // تحديث عداد الطلبات
+            // تحديث عداد الطلبات - يظهر فقط للسائقين غير المحجوزين
             const countBadge = document.getElementById('requestCount');
-            if (countBadge && currentUser.isDriver) {
+            if (countBadge && currentUser.isDriver && !currentUser.isBooked) {
                 if (pendingCount > 0) {
                     countBadge.textContent = pendingCount;
                     countBadge.style.display = 'inline-block';
                 } else {
                     countBadge.style.display = 'none';
                 }
+            } else if (countBadge) {
+                countBadge.style.display = 'none';
             }
         }, (error) => {
             console.error('❌ خطأ في الاستماع للطلبات:', error);
@@ -2050,190 +2147,160 @@ window.cancelRequestByCustomerFixed = async function(requestId) {
 };
 
 // ==========================================
-// إصلاح 4: إصلاح قبول الطلب من السائق
+// إصلاح 4: قبول الطلب (موحّد مع acceptRequest)
 // ==========================================
-window.acceptRequestFixed = async function(requestId, customerPhone) {
-    console.log('✅ محاولة قبول الطلب:', requestId);
-    
-    if (!currentUser.isDriver || !currentUser.driverId) {
-        showNotification('خطأ', 'يجب تسجيل الدخول كسائق أولاً');
-        return;
-    }
-    
-    showLoading();
-    
-    try {
-        // قراءة الطلب أولاً للتحقق
-        const requestSnapshot = await database.ref(`requests/${requestId}`).once('value');
-        const currentRequest = requestSnapshot.val();
-        
-        if (!currentRequest) {
-            console.error('❌ الطلب غير موجود');
-            showNotification('خطأ', 'الطلب غير موجود أو تم حذفه');
-            hideLoading();
-            return;
-        }
-        
-        if (currentRequest.status !== 'pending') {
-            console.error('❌ الطلب ليس في حالة انتظار');
-            showNotification('تنبيه', 'تم قبول هذا الطلب من سائق آخر');
-            hideLoading();
-            return;
-        }
-        
-        console.log('📄 حالة الطلب: pending - يمكن القبول');
-        
-        // تحديث الطلب مباشرة (بدون transaction لتجنب التعليق)
-        await database.ref(`requests/${requestId}`).update({
-            status: 'accepted',
-            acceptedBy: currentUser.driverId,
-            driverName: currentUser.name,
-            driverPhone: currentUser.phone,
-            showDriverPhone: currentUser.showPhone || true,
-            acceptedAt: Date.now()
-        });
-        
-        console.log('✅ تم تحديث الطلب بنجاح');
-        
-        // إنشاء سجل الرحلة
-        const tripId = `trip_${Date.now()}`;
-        await database.ref(`trips/${tripId}`).set({
-            requestId: requestId,
-            driverId: currentUser.driverId,
-            driverName: currentUser.name,
-            customerPhone: customerPhone,
-            destination: currentRequest.destination,
-            status: 'on_the_way',
-            createdAt: Date.now()
-        });
-        
-        console.log('✅ تم إنشاء سجل الرحلة');
-        
-        // إغلاق النافذة المنبثقة
-        map.closePopup();
-        
-        showNotification('تم ✅', `تم قبول الطلب - ${customerPhone}`);
-        
-        // سؤال عن الاتصال
-        setTimeout(() => {
-            if (confirm(`هل تريد الاتصال بالعميل ${customerPhone}؟`)) {
-                window.location.href = `tel:${customerPhone}`;
-            }
-        }, 1000);
-        
-    } catch (error) {
-        console.error('❌ خطأ في قبول الطلب:', error);
-        showNotification('خطأ', 'حدث خطأ: ' + error.message);
-    } finally {
-        hideLoading();
-    }
-};
+window.acceptRequestFixed = window.acceptRequest;
 
 // ==========================================
-// إصلاح 5: الاستماع لطلب المستخدم (مع معالجة الخروج والدخول)
+// الاستماع لطلب المستخدم - محسّن ونهائي
 // ==========================================
 window.listenToMyRequestFixed = function(requestId, customerPhone) {
-    console.log('👂 بدء الاستماع لطلب:', requestId);
-    
-    // حفظ معلومات الطلب في localStorage
     localStorage.setItem('activeRequestId', requestId);
     localStorage.setItem('activeRequestPhone', customerPhone);
     
-    database.ref(`requests/${requestId}`).on('value', (snapshot) => {
+    let lastMsgCount = 0;
+    let trackingStarted = false;    // لمنع بدء التتبع أكثر من مرة
+    let msgPanelShown = false;      // لمنع إظهار لوحة الرسائل أكثر من مرة
+
+    const requestRef = database.ref(`requests/${requestId}`);
+    requestRef.on('value', (snapshot) => {
         const request = snapshot.val();
-        
         if (!request) {
-            console.log('⚠️ الطلب غير موجود أو تم حذفه');
             localStorage.removeItem('activeRequestId');
             localStorage.removeItem('activeRequestPhone');
             return;
         }
         
-        console.log('📊 حالة الطلب:', request.status);
-        
+        // حالة: قيد الانتظار → أظهر زر الإلغاء
         if (request.status === 'pending') {
             showCancelRequestOptionFixed(requestId);
         }
         
-        if (request.status === 'accepted' && request.driverName) {
-            const phoneDisplay = request.showDriverPhone ? ` - ${request.driverPhone}` : '';
-            showNotification(
-                '🎉 تم قبول طلبك!',
-                `السائق ${request.driverName} في الطريق إليك${phoneDisplay}`,
-                10000
-            );
-            
-            trackDriverForCustomer(requestId, request.acceptedBy);
-            showCancelRequestOptionFixed(requestId);
-            
-            try {
-                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGmz6eeXSwgNUKXi8LZkHAU5kdXzzHoqBSJ2xe/ekEEKFF+z6eirVhMJRp/g8b5uIQUrfs7y24o2Bw==');
-                audio.play().catch(() => {});
-            } catch (e) {}
-        } 
-        else if (request.status === 'arrived') {
-            showNotification(
-                '📍 السائق وصل!',
-                `السائق ${request.driverName} في موقعك الآن`,
-                8000
-            );
-            
-            if (request.acceptedBy) {
-                stopTrackingDriver(request.acceptedBy);
+        // حالة: تم القبول → تتبع السائق + لوحة رسائله
+        if (request.status === 'accepted' && request.acceptedBy) {
+            if (!trackingStarted) {
+                trackingStarted = true;
+                const phoneDisplay = request.showDriverPhone && request.driverPhone ? ` - 📞 ${request.driverPhone}` : '';
+                showNotification('🎉 تم قبول طلبك!', `السائق ${request.driverName} في الطريق إليك${phoneDisplay}`, 12000);
+                
+                // بدء تتبع موقع السائق على الخريطة
+                trackDriverForCustomer(requestId, request.acceptedBy);
+                
+                // إظهار لوحة رسائل السائق
+                if (!msgPanelShown) {
+                    msgPanelShown = true;
+                    showCustomerMessagesPanel(requestId);
+                }
+                
+                // عرض زر الإلغاء
+                showCancelRequestOptionFixed(requestId);
+                
+                try {
+                    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGmz6eeXSwgNUKXi8LZkHAU5kdXzzHoqBSJ2xe/ekEEKFF+z6eirVhMJRp/g8b5uIQUrfs7y24o2Bw==');
+                    audio.play().catch(() => {});
+                } catch (e) {}
             }
-        } 
-        else if (request.status === 'completed' && !request.rated) {
-            showRatingModal(requestId, request.driverName, request.acceptedBy);
-            
-            if (request.acceptedBy) {
-                stopTrackingDriver(request.acceptedBy);
-            }
-            
-            localStorage.removeItem('activeRequestId');
-            localStorage.removeItem('activeRequestPhone');
-            database.ref(`requests/${requestId}`).off();
-        } 
-        else if (request.status === 'cancelled_by_customer') {
-            showNotification('تم الإلغاء', 'تم إلغاء طلبك', 5000);
-            
-            localStorage.removeItem('activeRequestId');
-            localStorage.removeItem('activeRequestPhone');
-            database.ref(`requests/${requestId}`).off();
-            
-            if (request.acceptedBy) {
-                stopTrackingDriver(request.acceptedBy);
-            }
-            
-            const cancelBtn = document.getElementById('cancelRequestBtn');
-            if (cancelBtn) cancelBtn.remove();
         }
         
-        // عرض رسائل السائق
-        if (request.messages && request.messages.length > 0) {
-            const lastMessage = request.messages[request.messages.length - 1];
-            if (lastMessage.from === 'driver') {
-                showNotification('رسالة من السائق', lastMessage.text, 7000);
-            }
+        // حالة: وصل السائق
+        else if (request.status === 'arrived') {
+            showNotification('📍 السائق وصل!', `السائق ${request.driverName || ''} في موقعك الآن`, 8000);
+            if (request.acceptedBy) stopTrackingDriver(request.acceptedBy);
         }
-    }, (error) => {
-        console.error('❌ خطأ في الاستماع للطلب:', error);
+        
+        // حالة: اكتملت الرحلة → نافذة التقييم
+        else if (request.status === 'completed') {
+            if (!request.rated) showRatingModal(requestId, request.driverName, request.acceptedBy);
+            if (request.acceptedBy) stopTrackingDriver(request.acceptedBy);
+            _cleanupCustomerUI(requestId);
+        }
+        
+        // حالة: ألغى الزبون
+        else if (request.status === 'cancelled_by_customer') {
+            showNotification('تم الإلغاء', 'تم إلغاء طلبك', 5000);
+            if (request.acceptedBy) stopTrackingDriver(request.acceptedBy);
+            _cleanupCustomerUI(requestId);
+        }
+        
+        // رسائل جديدة من السائق → إشعار للزبون
+        if (request.messages && request.messages.length > lastMsgCount) {
+            const newMsg = request.messages[request.messages.length - 1];
+            if (newMsg && newMsg.from === 'driver' && request.messages.length > lastMsgCount) {
+                showNotification('💬 رسالة من السائق', newMsg.text, 10000);
+            }
+            lastMsgCount = request.messages.length;
+        }
     });
 };
 
+function _cleanupCustomerUI(requestId) {
+    localStorage.removeItem('activeRequestId');
+    localStorage.removeItem('activeRequestPhone');
+    database.ref(`requests/${requestId}`).off();
+    const cancelBtn = document.getElementById('cancelRequestBtn');
+    if (cancelBtn) cancelBtn.remove();
+    const msgPanel = document.getElementById('customerMsgPanel');
+    if (msgPanel) {
+        database.ref(`requests/${requestId}/messages`).off();
+        msgPanel.remove();
+    }
+}
+
+// لوحة رسائل السائق للزبون
+function showCustomerMessagesPanel(requestId) {
+    const existing = document.getElementById('customerMsgPanel');
+    if (existing) return;
+
+    const panel = document.createElement('div');
+    panel.id = 'customerMsgPanel';
+    panel.style.cssText = `
+        position: fixed; bottom: 20px; right: 20px; z-index: 2400;
+        background: white; border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.25); width: 280px;
+        overflow: hidden; font-family: Tajawal, sans-serif;
+        animation: slideUp 0.3s ease-out;
+    `;
+    panel.innerHTML = `
+        <div style="background: linear-gradient(135deg, #FF6B35 0%, #F7B801 100%); color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 700; font-size: 15px;">🚕 رسائل السائق</span>
+            <button onclick="document.getElementById('customerMsgPanel').style.display=document.getElementById('customerMsgPanel').style.display==='none'?'block':'none'" 
+                style="background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 16px; line-height: 1;">−</button>
+        </div>
+        <div id="customerMsgList" style="max-height: 200px; overflow-y: auto; padding: 10px; background: #f8f9fa; min-height: 50px;">
+            <p style="text-align: center; color: #aaa; font-size: 13px; margin: 10px 0;">في انتظار رسائل السائق...</p>
+        </div>
+    `;
+    document.body.appendChild(panel);
+
+    // الاستماع للرسائل في real-time
+    database.ref(`requests/${requestId}/messages`).on('value', (snapshot) => {
+        const messages = snapshot.val() || [];
+        const listDiv = document.getElementById('customerMsgList');
+        if (!listDiv) return;
+        if (messages.length === 0) {
+            listDiv.innerHTML = '<p style="text-align: center; color: #aaa; font-size: 13px; margin: 10px 0;">في انتظار رسائل السائق...</p>';
+            return;
+        }
+        listDiv.innerHTML = messages.slice(-6).map(msg => `
+            <div style="padding: 8px 12px; margin-bottom: 6px; border-radius: 10px; background: white; border-right: 3px solid #FF6B35; font-size: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
+                <div style="color: #1A1A2E;">${msg.text}</div>
+                <div style="font-size: 11px; color: #999; margin-top: 3px;">${new Date(msg.timestamp).toLocaleTimeString('ar')}</div>
+            </div>
+        `).join('');
+        listDiv.scrollTop = listDiv.scrollHeight;
+        
+        // إعادة إظهار اللوحة عند وصول رسالة جديدة
+        panel.style.display = 'block';
+    });
+}
+
 // ==========================================
-// إصلاح 6: زر إلغاء الطلب المحسّن
-// ==========================================
-// ==========================================
-// إصلاح 7: استعادة الطلب النشط عند العودة
+// استعادة الطلب النشط عند إعادة فتح الصفحة
 // ==========================================
 (function() {
     const activeRequestId = localStorage.getItem('activeRequestId');
     const activeRequestPhone = localStorage.getItem('activeRequestPhone');
-    
     if (activeRequestId && activeRequestPhone) {
-        console.log('🔄 استعادة الطلب النشط:', activeRequestId);
-        
-        // الانتظار قليلاً حتى يتم تحميل كل شيء
         setTimeout(() => {
             listenToMyRequestFixed(activeRequestId, activeRequestPhone);
         }, 2000);
@@ -2241,30 +2308,16 @@ window.listenToMyRequestFixed = function(requestId, customerPhone) {
 })();
 
         // ==========================================
-        // تطبيق الإصلاحات على الدوال الموجودة
+        // توحيد الدوال النهائية
         // ==========================================
-        console.log('🔧 تطبيق الإصلاحات...');
+        // listenToMyRequest يستخدم النسخة المحسّنة
+        window.listenToMyRequest = window.listenToMyRequestFixed;
+        window.cancelRequestByCustomer = window.cancelRequestByCustomerFixed;
+        window.acceptRequestFixed = window.acceptRequest;
         
-        // استبدال الدوال
-        if (typeof cancelRequestByCustomer !== 'undefined') {
-            window.cancelRequestByCustomer = cancelRequestByCustomerFixed;
-        }
-        
-        if (typeof acceptRequest !== 'undefined') {
-            window.acceptRequest = acceptRequestFixed;
-        }
-        
-        if (typeof listenToMyRequest !== 'undefined') {
-            window.listenToMyRequest = listenToMyRequestFixed;
-        }
-        
-        // إعادة تشغيل الاستماع للطلبات للسائقين
+        // إعادة تشغيل الاستماع للطلبات للسائق إن كان مسجلاً
         if (currentUser && currentUser.isDriver) {
-            console.log('🚕 إعادة تشغيل الاستماع للطلبات للسائق');
             listenToRequestsFixed();
         }
-        
-        console.log('✅ تم تطبيق جميع الإصلاحات بنجاح!');
-        console.log('📱 التطبيق جاهز للاستخدام');
 
         } // end of initializeApp
