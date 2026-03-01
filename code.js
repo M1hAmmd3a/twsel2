@@ -16,42 +16,30 @@
         // Phone Gate - التحقق من رقم الهاتف
         // ========================================
         let userPhone = localStorage.getItem('userPhone');
+        const phoneGateModal = document.getElementById('phoneGateModal');
         
-        // التأكد من إخفاء نافذة الهاتف إذا كان الرقم محفوظاً
-        const phoneGateEl = document.getElementById('phoneGateModal');
+        // إذا الرقم محفوظ، أخفِ النافذة فوراً
         if (userPhone) {
-            if (phoneGateEl) phoneGateEl.style.display = 'none';
+            phoneGateModal.classList.remove('active');
             const phoneNumberEl = document.getElementById('phoneNumber');
             if (phoneNumberEl) phoneNumberEl.value = userPhone;
-        } else {
-            // إظهار النافذة فقط إذا لم يكن الرقم محفوظاً
-            if (phoneGateEl) phoneGateEl.style.display = 'flex';
         }
         
-        // handlePhoneSubmit معرّفة في HTML script - نربطها هنا أيضاً لتحديث userPhone
-        window.handlePhoneSubmit = function() {
-            var input = document.getElementById('gatePhone');
-            if (!input) return;
-            var phone = input.value.trim();
+        // زر الدخول
+        document.getElementById('phoneSubmitBtn').addEventListener('click', function() {
+            const phone = document.getElementById('gatePhone').value.trim();
             if (!/^[0-9]{9,10}$/.test(phone)) {
                 showNotification('خطأ', 'الرجاء إدخال رقم هاتف صحيح (9-10 أرقام)');
                 return;
             }
-            var fullPhone = phone.startsWith('0') ? phone : '0' + phone;
+            const fullPhone = phone.startsWith('0') ? phone : '0' + phone;
             userPhone = fullPhone;
             localStorage.setItem('userPhone', fullPhone);
-            var phoneEl = document.getElementById('phoneNumber');
-            if (phoneEl) phoneEl.value = fullPhone;
-            var modal = document.getElementById('phoneGateModal');
-            if (modal) modal.style.display = 'none';
-            showNotification('مرحباً 👋', `تم حفظ رقمك: ${fullPhone}`);
-        };
-        
-        // للتوافق مع الكود القديم - إذا كان هناك submit event listener قديم
-        var oldForm = document.getElementById('phoneGateForm');
-        if (oldForm) {
-            oldForm.onsubmit = function(e) { e.preventDefault(); return false; };
-        }
+            phoneGateModal.classList.remove('active');
+            const phoneNumberEl = document.getElementById('phoneNumber');
+            if (phoneNumberEl) phoneNumberEl.value = fullPhone;
+            showNotification('مرحباً 👋', `تم حفظ رقمك: ${fullPhone}. لن تحتاج لإدخاله مجدداً.`);
+        });
         
         // ========================================
         // WhatsApp Integration - التواصل مع المكتب
