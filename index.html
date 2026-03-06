@@ -1,16 +1,10 @@
-<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تكسي طولكرم - خدمة سيارات الأجرة الذكية</title>
-    
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
-    
     <style>
         :root {
             --primary: #FF6B35;
@@ -27,1639 +21,328 @@
             --gradient-primary: linear-gradient(135deg, #FF6B35 0%, #F7B801 100%);
             --gradient-dark: linear-gradient(135deg, #1A1A2E 0%, #004E89 100%);
         }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background: var(--light);
-            overflow-x: hidden;
-        }
-        
-        /* Hero Banner - المساحة الإعلانية */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Tajawal', sans-serif; background: var(--light); overflow-x: hidden; }
         .hero-banner {
-            position: fixed;
-            top: 80px;
-            left: 0;
-            right: 0;
-            height: 150px;
-            background: var(--gradient-primary);
-            z-index: 500;
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-            padding: 20px;
-            box-shadow: var(--shadow-lg);
-            animation: slideDown 0.8s ease-out;
+            position: fixed; top: 80px; left: 0; right: 0; height: 150px;
+            background: var(--gradient-primary); z-index: 500;
+            display: flex; align-items: center; justify-content: space-around;
+            padding: 20px; box-shadow: var(--shadow-lg); animation: slideDown 0.8s ease-out;
         }
-        
-        .banner-content {
-            text-align: center;
-            color: white;
-        }
-        
-        .banner-title {
-            font-family: 'Cairo', sans-serif;
-            font-size: 32px;
-            font-weight: 900;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .banner-subtitle {
-            font-size: 18px;
-            font-weight: 500;
-        }
-        
-        .banner-features {
-            display: flex;
-            gap: 30px;
-        }
-        
-        .feature-item {
-            text-align: center;
-            color: white;
-        }
-        
-        .feature-icon {
-            font-size: 48px;
-            margin-bottom: 8px;
-        }
-        
-        .feature-text {
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
+        .banner-content { text-align: center; color: white; }
+        .banner-title { font-family: 'Cairo', sans-serif; font-size: 32px; font-weight: 900; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .banner-subtitle { font-size: 18px; font-weight: 500; }
+        .banner-features { display: flex; gap: 30px; }
+        .feature-item { text-align: center; color: white; }
+        .feature-icon { font-size: 48px; margin-bottom: 8px; }
+        .feature-text { font-size: 14px; font-weight: 600; }
         .whatsapp-btn {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            z-index: 1000;
-            width: 60px;
-            height: 60px;
-            background: #25D366;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: var(--shadow-lg);
-            animation: pulse 2s infinite;
-            border: none;
-            font-size: 32px;
-            transition: all 0.3s;
+            position: fixed; bottom: 20px; left: 20px; z-index: 1000;
+            width: 60px; height: 60px; background: #25D366; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: var(--shadow-lg); animation: pulse 2s infinite;
+            border: none; font-size: 32px; transition: all 0.3s;
         }
-        
-        .whatsapp-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 8px 32px rgba(37, 211, 102, 0.5);
-        }
-        
-        /* Header Styles */
+        .whatsapp-btn:hover { transform: scale(1.1); box-shadow: 0 8px 32px rgba(37, 211, 102, 0.5); }
         .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 80px;
-            background: rgba(26, 26, 46, 0.95);
-            backdrop-filter: blur(20px);
-            z-index: 1000;
-            box-shadow: var(--shadow-lg);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 30px;
-            animation: slideDown 0.6s ease-out;
+            position: fixed; top: 0; left: 0; right: 0; height: 80px;
+            background: rgba(26, 26, 46, 0.95); backdrop-filter: blur(20px);
+            z-index: 1000; box-shadow: var(--shadow-lg);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 30px; animation: slideDown 0.6s ease-out;
         }
-        
-        @keyframes slideDown {
-            from {
-                transform: translateY(-100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        
+        @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .logo {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-family: 'Cairo', sans-serif;
-            font-size: 28px;
-            font-weight: 900;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            display: flex; align-items: center; gap: 15px;
+            font-family: 'Cairo', sans-serif; font-size: 28px; font-weight: 900;
+            background: var(--gradient-primary); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; background-clip: text;
         }
-        
         .logo-icon {
-            width: 45px;
-            height: 45px;
-            background: var(--gradient-primary);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            animation: rotate 20s linear infinite;
+            width: 45px; height: 45px; background: var(--gradient-primary);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; animation: rotate 20s linear infinite;
         }
-        
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        .header-actions {
-            display: flex;
-            gap: 15px;
-        }
-        
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .header-actions { display: flex; gap: 15px; }
         .btn {
-            padding: 12px 28px;
-            border: none;
-            border-radius: 12px;
-            font-family: 'Cairo', sans-serif;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            padding: 12px 28px; border: none; border-radius: 12px;
+            font-family: 'Cairo', sans-serif; font-size: 16px; font-weight: 700;
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; overflow: hidden; display: flex; align-items: center; gap: 8px;
         }
-        
         .btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+            content: ''; position: absolute; top: 50%; left: 50%; width: 0; height: 0;
+            border-radius: 50%; background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%); transition: width 0.6s, height 0.6s;
         }
-        
-        .btn:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-        
-        .btn-primary {
-            background: var(--gradient-primary);
-            color: white;
-            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.5);
-        }
-        
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: var(--accent);
-        }
-        
-        .btn-logout {
-            background: var(--danger);
-            color: white;
-        }
-        
-        .btn-admin {
-            background: var(--secondary);
-            color: white;
-            border: 2px solid var(--accent);
-        }
-        
-        .btn-admin:hover {
-            background: var(--accent);
-            color: var(--dark);
-        }
-        
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #e74c3c;
-            transform: translateY(-2px);
-        }
-        
+        .btn:hover::before { width: 300px; height: 300px; }
+        .btn-primary { background: var(--gradient-primary); color: white; box-shadow: 0 4px 15px rgba(255,107,53,0.4); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,107,53,0.5); }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 2px solid rgba(255,255,255,0.3); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.2); border-color: var(--accent); }
+        .btn-logout { background: var(--danger); color: white; }
+        .btn-admin { background: var(--secondary); color: white; border: 2px solid var(--accent); }
+        .btn-admin:hover { background: var(--accent); color: var(--dark); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #e74c3c; transform: translateY(-2px); }
         .btn-mail {
-            background: var(--secondary);
-            color: white;
-            position: fixed;
-            top: 250px;
-            left: 30px;
-            z-index: 999;
-            box-shadow: var(--shadow-lg);
-            animation: pulse 2s infinite;
+            background: var(--secondary); color: white; position: fixed;
+            top: 250px; left: 30px; z-index: 999; box-shadow: var(--shadow-lg); animation: pulse 2s infinite;
         }
-        
         .btn-toggle-panel {
-            background: var(--gradient-primary);
-            color: white;
-            position: fixed;
-            top: 250px;
-            right: 30px;
-            z-index: 999;
-            box-shadow: var(--shadow-lg);
+            background: var(--gradient-primary); color: white; position: fixed;
+            top: 250px; right: 30px; z-index: 999; box-shadow: var(--shadow-lg);
         }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        
-        /* Map Container */
-        .map-container {
-            position: fixed;
-            top: 230px;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 1;
-        }
-        
-        #map {
-            width: 100%;
-            height: 100%;
-            filter: saturate(1.1) brightness(0.95);
-        }
-        
-        /* Phone Input Modal */
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .map-container { position: fixed; top: 230px; left: 0; right: 0; bottom: 0; z-index: 1; }
+        #map { width: 100%; height: 100%; filter: saturate(1.1) brightness(0.95); }
         .phone-gate-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(15px);
-            z-index: 5000;
-            align-items: center;
-            justify-content: center;
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9); backdrop-filter: blur(15px);
+            z-index: 5000; align-items: center; justify-content: center;
         }
-        
-        .phone-gate-modal.active {
-            display: flex;
-        }
-        
+        .phone-gate-modal.active { display: flex; }
         .phone-gate-content {
             background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            border-radius: 24px;
-            padding: 50px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            animation: slideUp 0.5s ease-out;
+            border-radius: 24px; padding: 50px; max-width: 500px; width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideUp 0.5s ease-out;
         }
-        
-        .phone-gate-icon {
-            text-align: center;
-            font-size: 100px;
-            margin-bottom: 20px;
-            animation: bounce 1s infinite;
-        }
-        
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
-        }
-        
+        .phone-gate-icon { text-align: center; font-size: 100px; margin-bottom: 20px; animation: bounce 1s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
         .phone-gate-title {
-            font-family: 'Cairo', sans-serif;
-            font-size: 32px;
-            font-weight: 900;
-            text-align: center;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 15px;
+            font-family: 'Cairo', sans-serif; font-size: 32px; font-weight: 900;
+            text-align: center; background: var(--gradient-primary);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 15px;
         }
-        
-        .phone-gate-subtitle {
-            text-align: center;
-            color: #666;
-            font-size: 16px;
-            margin-bottom: 30px;
-        }
-        
+        .phone-gate-subtitle { text-align: center; color: #666; font-size: 16px; margin-bottom: 30px; }
         .phone-input-container {
-            display: flex;
-            align-items: center;
-            background: white;
-            border: 3px solid var(--light);
-            border-radius: 12px;
-            overflow: hidden;
-            transition: all 0.3s;
-            margin-bottom: 20px;
+            display: flex; align-items: center; background: white;
+            border: 3px solid var(--light); border-radius: 12px; overflow: hidden;
+            transition: all 0.3s; margin-bottom: 20px;
         }
-        
-        .phone-input-container:focus-within {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
-        }
-        
+        .phone-input-container:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(255,107,53,0.1); }
         .phone-prefix {
-            padding: 18px 15px;
-            background: var(--light);
-            font-family: 'Cairo', sans-serif;
-            font-weight: 700;
-            color: var(--dark);
-            font-size: 20px;
-            border-left: 2px solid #e0e0e0;
+            padding: 18px 15px; background: var(--light); font-family: 'Cairo', sans-serif;
+            font-weight: 700; color: var(--dark); font-size: 20px; border-left: 2px solid #e0e0e0;
         }
-        
         .phone-input {
-            flex: 1;
-            border: none !important;
-            padding: 18px 20px;
-            font-size: 20px;
-            font-family: 'Cairo', sans-serif;
-            font-weight: 600;
-            direction: ltr;
-            text-align: left;
+            flex: 1; border: none !important; padding: 18px 20px; font-size: 20px;
+            font-family: 'Cairo', sans-serif; font-weight: 600; direction: ltr; text-align: left;
         }
-        
-        .phone-input:focus {
-            outline: none;
-        }
-        
-        /* Modal Styles */
+        .phone-input:focus { outline: none; }
         .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.3s ease-out;
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
+            z-index: 2000; align-items: center; justify-content: center; animation: fadeIn 0.3s ease-out;
         }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        .modal.active {
-            display: flex;
-        }
-        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal.active { display: flex; }
         .modal-content {
-            background: white;
-            border-radius: 24px;
-            padding: 40px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: var(--shadow-lg);
-            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
+            background: white; border-radius: 24px; padding: 40px;
+            max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;
+            box-shadow: var(--shadow-lg); animation: slideUp 0.4s cubic-bezier(0.4,0,0.2,1); position: relative;
         }
-        
-        @keyframes slideUp {
-            from {
-                transform: translateY(50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid var(--light);
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid var(--light);
         }
-        
         .modal-title {
-            font-family: 'Cairo', sans-serif;
-            font-size: 28px;
-            font-weight: 900;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-family: 'Cairo', sans-serif; font-size: 28px; font-weight: 900;
+            background: var(--gradient-primary); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; background-clip: text;
         }
-        
         .close-btn {
-            width: 40px;
-            height: 40px;
-            border: none;
-            background: var(--light);
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
+            width: 40px; height: 40px; border: none; background: var(--light);
+            border-radius: 50%; cursor: pointer; font-size: 24px;
+            display: flex; align-items: center; justify-content: center; transition: all 0.3s;
         }
-        
-        .close-btn:hover {
-            background: var(--danger);
-            color: white;
-            transform: rotate(90deg);
-        }
-        
-        .form-group {
-            margin-bottom: 24px;
-        }
-        
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--dark);
-            font-size: 15px;
-        }
-        
+        .close-btn:hover { background: var(--danger); color: white; transform: rotate(90deg); }
+        .form-group { margin-bottom: 24px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark); font-size: 15px; }
         .form-input {
-            width: 100%;
-            padding: 14px 18px;
-            border: 2px solid var(--light);
-            border-radius: 12px;
-            font-family: 'Tajawal', sans-serif;
-            font-size: 15px;
-            transition: all 0.3s;
-            background: var(--light);
+            width: 100%; padding: 14px 18px; border: 2px solid var(--light);
+            border-radius: 12px; font-family: 'Tajawal', sans-serif; font-size: 15px;
+            transition: all 0.3s; background: var(--light);
         }
-        
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: white;
-            box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
-        }
-        
-        textarea.form-input {
-            min-height: 100px;
-            resize: vertical;
-        }
-        
+        .form-input:focus { outline: none; border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(255,107,53,0.1); }
+        textarea.form-input { min-height: 100px; resize: vertical; }
         .map-selector {
-            height: 300px;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 2px solid var(--light);
-            margin-top: 8px;
-            position: relative;
+            height: 300px; border-radius: 12px; overflow: hidden;
+            border: 2px solid var(--light); margin-top: 8px; position: relative;
         }
-        
         .map-selector::after {
             content: '📍 اضغط على الخريطة لتحديد موقعك';
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 107, 53, 0.95);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            z-index: 1000;
-            pointer-events: none;
+            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+            background: rgba(255,107,53,0.95); color: white; padding: 8px 15px;
+            border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 1000; pointer-events: none;
         }
-        
         .location-display {
-            background: var(--light);
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 8px;
-            font-size: 14px;
-            color: var(--secondary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            background: var(--light); padding: 12px; border-radius: 8px;
+            margin-top: 8px; font-size: 14px; color: var(--secondary);
+            display: flex; align-items: center; gap: 8px;
         }
-        
-        .price-estimate {
-            background: linear-gradient(135deg, #00D9A5 0%, #00b894 100%);
-            color: white;
-            padding: 15px;
-            border-radius: 12px;
-            margin-top: 15px;
-            text-align: center;
-            font-family: 'Cairo', sans-serif;
-        }
-        
-        .price-amount {
-            font-size: 32px;
-            font-weight: 900;
-            margin: 10px 0;
-        }
-        
-        /* Badge */
-        .badge {
-            display: inline-block;
-            min-width: 20px;
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 700;
-            text-align: center;
-        }
-        
-        /* Drivers Panel */
+        .badge { display: inline-block; min-width: 20px; padding: 2px 6px; border-radius: 10px; font-size: 11px; font-weight: 700; text-align: center; }
         .drivers-panel {
-            position: fixed;
-            top: 250px;
-            right: 20px;
-            width: 300px;
-            max-height: calc(100vh - 270px);
-            background: white;
-            border-radius: 16px;
-            box-shadow: var(--shadow-lg);
-            z-index: 999;
-            overflow: hidden;
-            display: none;
-            animation: slideInRight 0.3s ease-out;
+            position: fixed; top: 250px; right: 20px; width: 300px;
+            max-height: calc(100vh - 270px); background: white; border-radius: 16px;
+            box-shadow: var(--shadow-lg); z-index: 999; overflow: hidden;
+            display: none; animation: slideInRight 0.3s ease-out;
         }
-        
-        .drivers-panel.active {
-            display: block;
-        }
-        
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        
+        .drivers-panel.active { display: block; }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .panel-header {
-            background: var(--gradient-dark);
-            color: white;
-            padding: 15px 20px;
-            font-family: 'Cairo', sans-serif;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: var(--gradient-dark); color: white; padding: 15px 20px;
+            font-family: 'Cairo', sans-serif; display: flex; justify-content: space-between; align-items: center;
         }
-        
-        .panel-header h3 {
-            font-size: 18px;
-            font-weight: 700;
-            margin: 0;
-        }
-        
+        .panel-header h3 { font-size: 18px; font-weight: 700; margin: 0; }
         .close-panel-btn {
-            width: 30px;
-            height: 30px;
-            border: none;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
+            width: 30px; height: 30px; border: none; background: rgba(255,255,255,0.2);
+            color: white; border-radius: 50%; cursor: pointer; font-size: 20px;
+            display: flex; align-items: center; justify-content: center; transition: all 0.3s;
         }
-        
-        .close-panel-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: rotate(90deg);
-        }
-        
-        .drivers-list {
-            max-height: calc(100vh - 350px);
-            overflow-y: auto;
-            padding: 10px;
-        }
-        
+        .close-panel-btn:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg); }
+        .drivers-list { max-height: calc(100vh - 350px); overflow-y: auto; padding: 10px; }
         .driver-card {
-            background: var(--light);
-            padding: 12px 15px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.3s;
+            background: var(--light); padding: 12px 15px; border-radius: 12px;
+            margin-bottom: 10px; display: flex; align-items: center; gap: 12px; transition: all 0.3s;
         }
-        
-        .driver-card:hover {
-            background: #e8f5e9;
-            transform: translateX(-5px);
-        }
-        
-        .driver-avatar {
-            width: 45px;
-            height: 45px;
-            background: var(--gradient-primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
-        
-        .driver-info {
-            flex: 1;
-        }
-        
-        .driver-name {
-            font-weight: 700;
-            font-size: 15px;
-            color: var(--dark);
-            margin-bottom: 4px;
-        }
-        
-        .driver-status {
-            font-size: 12px;
-            color: var(--success);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .driver-rating {
-            font-size: 13px;
-            color: var(--accent);
-        }
-        
-        /* Notification */
+        .driver-card:hover { background: #e8f5e9; transform: translateX(-5px); }
+        .driver-avatar { width: 45px; height: 45px; background: var(--gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .driver-info { flex: 1; }
+        .driver-name { font-weight: 700; font-size: 15px; color: var(--dark); margin-bottom: 4px; }
+        .driver-status { font-size: 12px; color: var(--success); display: flex; align-items: center; gap: 5px; }
+        .driver-rating { font-size: 13px; color: var(--accent); }
         .notification {
-            position: fixed;
-            top: 100px;
-            right: 30px;
-            background: white;
-            padding: 20px 25px;
-            border-radius: 16px;
-            box-shadow: var(--shadow-lg);
-            z-index: 3000;
-            display: none;
-            animation: slideInRight 0.4s ease-out;
-            max-width: 350px;
+            position: fixed; top: 100px; right: 30px; background: white;
+            padding: 20px 25px; border-radius: 16px; box-shadow: var(--shadow-lg);
+            z-index: 3000; display: none; animation: slideInRight 0.4s ease-out; max-width: 350px;
         }
-        
-        .notification.active {
-            display: block;
-        }
-        
-        .notification-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-        
-        .notification-icon {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: var(--gradient-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
-        
-        .notification-title {
-            font-weight: 700;
-            font-size: 18px;
-            color: var(--dark);
-        }
-        
-        .notification-body {
-            color: #666;
-            line-height: 1.6;
-            font-size: 14px;
-        }
-        
-        /* Chat Messages - رسائل السائق للزبون */
-        .chat-messages {
-            max-height: 200px;
-            overflow-y: auto;
-            margin: 15px 0;
-            padding: 10px;
-            background: var(--light);
-            border-radius: 8px;
-        }
-        
-        .chat-message {
-            padding: 8px 12px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            background: white;
-            border-left: 3px solid var(--primary);
-        }
-        
-        .message-text {
-            font-size: 14px;
-            color: var(--dark);
-        }
-        
-        .message-time {
-            font-size: 11px;
-            color: #999;
-            margin-top: 4px;
-        }
-        
-        .quick-messages {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
-        }
-        
-        .quick-msg-btn {
-            padding: 8px 15px;
-            background: var(--light);
-            border: 2px solid var(--primary);
-            border-radius: 20px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.3s;
-            color: var(--primary);
-            font-weight: 600;
-        }
-        
-        .quick-msg-btn:hover {
-            background: var(--primary);
-            color: white;
-        }
-        
-        /* Request Popup */
-        .request-popup {
-            padding: 20px;
-            min-width: 280px;
-        }
-        
-        .request-popup h3 {
-            font-family: 'Cairo', sans-serif;
-            font-size: 20px;
-            margin-bottom: 15px;
-            color: var(--dark);
-        }
-        
-        .request-info {
-            margin-bottom: 12px;
-        }
-        
-        .request-label {
-            font-weight: 600;
-            color: var(--secondary);
-            font-size: 13px;
-            margin-bottom: 4px;
-        }
-        
-        .request-value {
-            color: var(--dark);
-            font-size: 15px;
-        }
-        
-        .request-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .btn-accept {
-            flex: 1;
-            background: var(--success);
-            color: white;
-            padding: 10px;
-            font-size: 14px;
-        }
-        
-        .btn-reject {
-            flex: 1;
-            background: var(--danger);
-            color: white;
-            padding: 10px;
-            font-size: 14px;
-        }
-        
-        .btn-arrived {
-            flex: 1;
-            background: var(--accent);
-            color: var(--dark);
-            font-weight: 700;
-        }
-        
-        .btn-complete {
-            flex: 1;
-            background: #6c5ce7;
-            color: white;
-        }
-        
-        /* Rating System */
-        .rating-container {
-            margin-top: 15px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 12px;
-        }
-        
-        .rating-stars {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            font-size: 32px;
-            margin: 15px 0;
-        }
-        
-        .star {
-            cursor: pointer;
-            transition: all 0.2s;
-            filter: grayscale(100%);
-        }
-        
-        .star:hover,
-        .star.active {
-            filter: grayscale(0%);
-            transform: scale(1.2);
-        }
-        
-        .rating-comment {
-            width: 100%;
-            margin-top: 10px;
-            padding: 10px;
-            border: 2px solid var(--light);
-            border-radius: 8px;
-            font-family: 'Tajawal', sans-serif;
-            resize: vertical;
-            min-height: 60px;
-        }
-        
-        /* Status Badge */
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-top: 8px;
-        }
-        
-        .status-pending {
-            background: #ffeaa7;
-            color: #d63031;
-        }
-        
-        .status-accepted {
-            background: #55efc4;
-            color: #00b894;
-        }
-        
-        /* Loading Spinner */
-        .loading {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 4000;
-        }
-        
-        .loading.active {
-            display: block;
-        }
-        
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(255, 107, 53, 0.2);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Online Indicator */
-        .online-indicator {
-            width: 12px;
-            height: 12px;
-            background: var(--success);
-            border-radius: 50%;
-            display: inline-block;
-            margin-left: 8px;
-            animation: blink 2s infinite;
-        }
-        
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-        
-        /* Admin Dashboard */
-        .admin-dashboard {
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-        
-        .admin-section {
-            margin-bottom: 30px;
-            padding: 20px;
-            background: var(--light);
-            border-radius: 12px;
-        }
-        
-        .admin-section-title {
-            font-family: 'Cairo', sans-serif;
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 15px;
-            color: var(--dark);
-        }
-        
-        .requests-list {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .request-card {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--primary);
-        }
-        
-        .request-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        /* Responsive */
+        .notification.active { display: block; }
+        .notification-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .notification-icon { width: 45px; height: 45px; border-radius: 50%; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; font-size: 24px; }
+        .notification-title { font-weight: 700; font-size: 18px; color: var(--dark); }
+        .notification-body { color: #666; line-height: 1.6; font-size: 14px; }
+        .chat-messages { max-height: 200px; overflow-y: auto; margin: 15px 0; padding: 10px; background: var(--light); border-radius: 8px; }
+        .chat-message { padding: 8px 12px; margin-bottom: 8px; border-radius: 8px; background: white; border-left: 3px solid var(--primary); }
+        .message-text { font-size: 14px; color: var(--dark); }
+        .message-time { font-size: 11px; color: #999; margin-top: 4px; }
+        .quick-messages { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .quick-msg-btn { padding: 8px 15px; background: var(--light); border: 2px solid var(--primary); border-radius: 20px; font-size: 13px; cursor: pointer; transition: all 0.3s; color: var(--primary); font-weight: 600; }
+        .quick-msg-btn:hover { background: var(--primary); color: white; }
+        .request-popup { padding: 20px; min-width: 280px; }
+        .request-popup h3 { font-family: 'Cairo', sans-serif; font-size: 20px; margin-bottom: 15px; color: var(--dark); }
+        .request-info { margin-bottom: 12px; }
+        .request-label { font-weight: 600; color: var(--secondary); font-size: 13px; margin-bottom: 4px; }
+        .request-value { color: var(--dark); font-size: 15px; }
+        .request-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-accept { flex: 1; background: var(--success); color: white; padding: 10px; font-size: 14px; }
+        .btn-reject { flex: 1; background: var(--danger); color: white; padding: 10px; font-size: 14px; }
+        .btn-arrived { flex: 1; background: var(--accent); color: var(--dark); font-weight: 700; }
+        .btn-complete { flex: 1; background: #6c5ce7; color: white; }
+        .rating-container { margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 12px; }
+        .rating-stars { display: flex; gap: 10px; justify-content: center; font-size: 32px; margin: 15px 0; }
+        .star { cursor: pointer; transition: all 0.2s; filter: grayscale(100%); }
+        .star:hover, .star.active { filter: grayscale(0%); transform: scale(1.2); }
+        .rating-comment { width: 100%; margin-top: 10px; padding: 10px; border: 2px solid var(--light); border-radius: 8px; font-family: 'Tajawal', sans-serif; resize: vertical; min-height: 60px; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-top: 8px; }
+        .status-pending { background: #ffeaa7; color: #d63031; }
+        .status-accepted { background: #55efc4; color: #00b894; }
+        .loading { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 4000; }
+        .loading.active { display: block; }
+        .spinner { width: 60px; height: 60px; border: 4px solid rgba(255,107,53,0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .online-indicator { width: 12px; height: 12px; background: var(--success); border-radius: 50%; display: inline-block; margin-left: 8px; animation: blink 2s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .admin-dashboard { max-height: 70vh; overflow-y: auto; }
+        .admin-section { margin-bottom: 30px; padding: 20px; background: var(--light); border-radius: 12px; }
+        .admin-section-title { font-family: 'Cairo', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 15px; color: var(--dark); }
+        .requests-list { max-height: 400px; overflow-y: auto; }
+        .request-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
+        .request-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: var(--light); }
+        ::-webkit-scrollbar-thumb { background: var(--gradient-primary); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-dark); }
+        .leaflet-popup-content-wrapper { border-radius: 20px !important; }
+        .leaflet-popup-content { margin: 0 !important; font-size: 17px; }
+
         @media (max-width: 768px) {
-            .hero-banner {
-                height: 100px;
-                padding: 10px;
-            }
-            
-            .banner-title {
-                font-size: 20px;
-            }
-            
-            .banner-subtitle {
-                font-size: 13px;
-            }
-            
-            .banner-features {
-                display: none;
-            }
-            
-            .header {
-                padding: 10px;
-                height: auto;
-                min-height: 80px;
-            }
-            
-            .logo {
-                font-size: 20px;
-            }
-            
-            .logo-icon {
-                width: 40px;
-                height: 40px;
-                font-size: 22px;
-            }
-            
-            .btn {
-                padding: 14px 20px;
-                font-size: 16px;
-            }
-            
-            .btn-admin {
-                padding: 14px 20px;
-                font-size: 16px;
-            }
-            
-            .header-actions {
-                width: 100%;
-                justify-content: center;
-                gap: 10px;
-                margin-top: 10px;
-            }
-            
-            .map-container {
-                top: 180px;
-            }
-            
-            .btn-mail,
-            .btn-toggle-panel {
-                top: 190px;
-                padding: 14px 20px;
-                font-size: 16px;
-            }
-            
-            .drivers-panel {
-                top: 190px;
-                width: calc(100% - 20px);
-                max-width: 100%;
-                left: 10px;
-                right: 10px;
-            }
-            
-            .modal-content {
-                padding: 30px 20px;
-                width: 95%;
-            }
-            
-            .modal-title {
-                font-size: 24px;
-            }
-            
-            .form-input {
-                padding: 16px;
-                font-size: 16px;
-            }
-            
-            .form-label {
-                font-size: 16px;
-                font-weight: 700;
-            }
-            
-            .btn-primary,
-            .btn-secondary {
-                padding: 16px;
-                font-size: 18px;
-            }
-            
-            .notification {
-                right: 10px;
-                left: 10px;
-                max-width: calc(100% - 20px);
-                top: 90px;
-            }
-            
-            .notification-title {
-                font-size: 18px;
-            }
-            
-            .notification-body {
-                font-size: 16px;
-            }
-            
-            .phone-gate-content {
-                padding: 30px 20px;
-            }
-            
-            .phone-gate-title {
-                font-size: 24px;
-            }
-            
-            .phone-gate-subtitle {
-                font-size: 16px;
-            }
-            
-            .phone-input {
-                font-size: 18px;
-                padding: 16px;
-            }
-            
-            .phone-prefix {
-                font-size: 18px;
-                padding: 16px 12px;
-            }
-            
-            .whatsapp-btn {
-                width: 70px;
-                height: 70px;
-                font-size: 36px;
-                bottom: 80px;
-            }
-            
-            .request-popup {
-                min-width: 100%;
-            }
-            
-            .request-info {
-                margin-bottom: 15px;
-            }
-            
-            .request-label {
-                font-size: 15px;
-                font-weight: 700;
-            }
-            
-            .request-value {
-                font-size: 17px;
-                font-weight: 600;
-            }
-            
-            .request-actions button {
-                padding: 14px;
-                font-size: 16px;
-            }
-            
-            .driver-card {
-                padding: 15px;
-            }
-            
-            .driver-name {
-                font-size: 17px;
-            }
-            
-            .driver-status {
-                font-size: 14px;
-            }
-            
-            .map-selector {
-                height: 250px;
-            }
+            .hero-banner { height: 120px; padding: 15px 10px; }
+            .banner-title { font-size: 24px; line-height: 1.3; }
+            .banner-subtitle { font-size: 16px; }
+            .banner-features { display: none; }
+            .header { padding: 15px 10px; min-height: 90px; }
+            .logo { font-size: 22px; }
+            .logo-icon { width: 45px; height: 45px; font-size: 24px; }
+            .btn { padding: 16px 24px !important; font-size: 18px !important; min-height: 55px; }
+            .btn span { font-size: 20px; }
+            .btn-admin { padding: 16px 24px !important; font-size: 18px !important; }
+            .header-actions { width: 100%; justify-content: space-between; gap: 8px; margin-top: 12px; display: flex; flex-wrap: nowrap; }
+            .header-actions .btn { flex: 1; min-width: 0; padding: 14px 12px !important; font-size: 15px !important; }
+            .map-container { top: 210px; }
+            .btn-mail, .btn-toggle-panel { top: 220px; padding: 18px 26px !important; font-size: 18px !important; min-height: 60px; }
+            .drivers-panel { top: 220px; width: calc(100% - 20px); max-width: 100%; left: 10px; right: 10px; }
+            .panel-header h3 { font-size: 20px; }
+            .driver-card { padding: 18px; margin-bottom: 12px; }
+            .driver-avatar { width: 55px; height: 55px; font-size: 28px; }
+            .driver-name { font-size: 19px; font-weight: 700; }
+            .driver-status { font-size: 16px; }
+            .driver-rating { font-size: 16px; }
+            .modal-content { padding: 35px 25px; width: 96%; }
+            .modal-title { font-size: 26px; }
+            .form-label { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+            .form-input { padding: 18px !important; font-size: 18px !important; min-height: 58px; }
+            textarea.form-input { min-height: 120px; font-size: 17px; }
+            .form-group { margin-bottom: 28px; }
+            .btn-primary, .btn-secondary { padding: 20px !important; font-size: 20px !important; min-height: 65px; }
+            .notification { right: 10px; left: 10px; max-width: calc(100% - 20px); top: 100px; padding: 25px; }
+            .notification-icon { width: 55px; height: 55px; font-size: 28px; }
+            .notification-title { font-size: 20px; font-weight: 700; }
+            .notification-body { font-size: 18px; line-height: 1.6; }
+            .phone-gate-content { padding: 35px 25px; width: 95%; }
+            .phone-gate-icon { font-size: 90px; }
+            .phone-gate-title { font-size: 26px; }
+            .phone-gate-subtitle { font-size: 18px; }
+            .phone-input-container { margin: 25px 0; }
+            .phone-input { font-size: 20px !important; padding: 20px !important; }
+            .phone-prefix { font-size: 20px !important; padding: 20px 15px !important; }
+            .whatsapp-btn { width: 75px; height: 75px; font-size: 38px; bottom: 90px; left: 15px; }
+            .request-popup { min-width: 100%; padding: 25px; }
+            .request-popup h3 { font-size: 24px; margin-bottom: 20px; }
+            .request-info { margin-bottom: 18px; padding: 12px; background: #f8f9fa; border-radius: 8px; }
+            .request-label { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+            .request-value { font-size: 19px; font-weight: 600; line-height: 1.4; }
+            .request-value a { font-size: 20px !important; }
+            .request-actions { gap: 12px; margin-top: 20px; }
+            .request-actions button { padding: 18px !important; font-size: 18px !important; min-height: 60px; }
+            .status-badge { padding: 8px 16px; font-size: 16px; margin-top: 12px; }
+            .quick-msg-btn { padding: 14px 20px; font-size: 16px; min-height: 50px; }
+            .chat-message { padding: 14px; font-size: 17px; }
+            .map-selector { height: 280px; margin-top: 12px; }
+            .map-selector::after { font-size: 16px; padding: 12px 20px; }
+            .location-display { padding: 15px; font-size: 16px; margin-top: 12px; }
+            #cancelRequestBtn { bottom: 90px !important; right: 15px !important; padding: 20px 35px !important; font-size: 20px !important; min-height: 65px; }
+            #cancelRequestBtn span { font-size: 24px; }
+            .rating-stars { font-size: 42px !important; gap: 15px; }
+            .rating-comment { min-height: 100px; font-size: 17px; padding: 15px; }
+            .admin-section { padding: 20px 15px; margin-bottom: 20px; }
+            .admin-section-title { font-size: 22px; margin-bottom: 18px; }
+            .request-card { padding: 18px; font-size: 17px; }
+            .close-btn { width: 50px; height: 50px; font-size: 28px; }
+            .close-panel-btn { width: 40px; height: 40px; font-size: 24px; }
+            .driver-location-icon div { font-size: 60px !important; }
         }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 10px;
+        @media (max-width: 480px) {
+            .banner-title { font-size: 20px; }
+            .banner-subtitle { font-size: 14px; }
+            .logo { font-size: 18px; }
+            .header-actions .btn { font-size: 16px; padding: 14px 18px !important; }
         }
-        
-        ::-webkit-scrollbar-track {
-            background: var(--light);
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--gradient-primary);
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-dark);
-        }
-    /* ==========================================
-   إضافة هذا الـ CSS في قسم <style> في الملف
-   أو قبل إغلاق وسم </style>
-   ========================================== */
-
-/* تحسينات التصميم للهاتف - نسخة محسّنة جداً */
-@media (max-width: 768px) {
-    /* تكبير البانر */
-    .hero-banner {
-        height: 120px;
-        padding: 15px 10px;
-    }
-    
-    .banner-title {
-        font-size: 24px;
-        line-height: 1.3;
-    }
-    
-    .banner-subtitle {
-        font-size: 16px;
-    }
-    
-    /* تكبير الهيدر */
-    .header {
-        padding: 15px 10px;
-        min-height: 90px;
-    }
-    
-    .logo {
-        font-size: 22px;
-    }
-    
-    .logo-icon {
-        width: 45px;
-        height: 45px;
-        font-size: 24px;
-    }
-    
-    /* تكبير الأزرار */
-    .btn {
-        padding: 16px 24px !important;
-        font-size: 18px !important;
-        min-height: 55px;
-    }
-    
-    .btn span {
-        font-size: 20px;
-    }
-    
-    .btn-admin {
-        padding: 16px 24px !important;
-        font-size: 18px !important;
-    }
-    
-    .header-actions {
-        width: 100%;
-        justify-content: space-between;
-        gap: 8px;
-        margin-top: 12px;
-        display: flex;
-        flex-wrap: nowrap;
-    }
-    
-    .header-actions .btn {
-        flex: 1;
-        min-width: 0;
-        padding: 14px 12px !important;
-        font-size: 15px !important;
-    }
-    
-    .btn-admin {
-        order: 1;
-    }
-    
-    .btn-secondary {
-        order: 2;
-    }
-    
-    .btn-primary {
-        order: 3;
-    }
-    
-    /* تكبير الخريطة */
-    .map-container {
-        top: 210px;
-    }
-    
-    /* تكبير أزرار الطلبات والسائقين */
-    .btn-mail,
-    .btn-toggle-panel {
-        top: 220px;
-        padding: 18px 26px !important;
-        font-size: 18px !important;
-        min-height: 60px;
-    }
-    
-    /* تكبير قائمة السائقين */
-    .drivers-panel {
-        top: 220px;
-        width: calc(100% - 20px);
-        max-width: 100%;
-        left: 10px;
-        right: 10px;
-    }
-    
-    .panel-header h3 {
-        font-size: 20px;
-    }
-    
-    .driver-card {
-        padding: 18px;
-        margin-bottom: 12px;
-    }
-    
-    .driver-avatar {
-        width: 55px;
-        height: 55px;
-        font-size: 28px;
-    }
-    
-    .driver-name {
-        font-size: 19px;
-        font-weight: 700;
-    }
-    
-    .driver-status {
-        font-size: 16px;
-    }
-    
-    .driver-rating {
-        font-size: 16px;
-    }
-    
-    /* تكبير النماذج */
-    .modal-content {
-        padding: 35px 25px;
-        width: 96%;
-    }
-    
-    .modal-title {
-        font-size: 26px;
-    }
-    
-    .form-label {
-        font-size: 18px;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
-    
-    .form-input {
-        padding: 18px !important;
-        font-size: 18px !important;
-        min-height: 58px;
-    }
-    
-    textarea.form-input {
-        min-height: 120px;
-        font-size: 17px;
-    }
-    
-    .form-group {
-        margin-bottom: 28px;
-    }
-    
-    /* تكبير أزرار النماذج */
-    .btn-primary,
-    .btn-secondary {
-        padding: 20px !important;
-        font-size: 20px !important;
-        min-height: 65px;
-    }
-    
-    /* تكبير الإشعارات */
-    .notification {
-        right: 10px;
-        left: 10px;
-        max-width: calc(100% - 20px);
-        top: 100px;
-        padding: 25px;
-    }
-    
-    .notification-icon {
-        width: 55px;
-        height: 55px;
-        font-size: 28px;
-    }
-    
-    .notification-title {
-        font-size: 20px;
-        font-weight: 700;
-    }
-    
-    .notification-body {
-        font-size: 18px;
-        line-height: 1.6;
-    }
-    
-    /* تكبير شاشة إدخال الرقم */
-    .phone-gate-content {
-        padding: 35px 25px;
-        width: 95%;
-    }
-    
-    .phone-gate-icon {
-        font-size: 90px;
-    }
-    
-    .phone-gate-title {
-        font-size: 26px;
-    }
-    
-    .phone-gate-subtitle {
-        font-size: 18px;
-    }
-    
-    .phone-input-container {
-        margin: 25px 0;
-    }
-    
-    .phone-input {
-        font-size: 20px !important;
-        padding: 20px !important;
-    }
-    
-    .phone-prefix {
-        font-size: 20px !important;
-        padding: 20px 15px !important;
-    }
-    
-    /* تكبير زر الواتساب */
-    .whatsapp-btn {
-        width: 75px;
-        height: 75px;
-        font-size: 38px;
-        bottom: 90px;
-        left: 15px;
-    }
-    
-    /* تكبير نوافذ الطلبات */
-    .request-popup {
-        min-width: 100%;
-        padding: 25px;
-    }
-    
-    .request-popup h3 {
-        font-size: 24px;
-        margin-bottom: 20px;
-    }
-    
-    .request-info {
-        margin-bottom: 18px;
-        padding: 12px;
-        background: #f8f9fa;
-        border-radius: 8px;
-    }
-    
-    .request-label {
-        font-size: 17px;
-        font-weight: 700;
-        margin-bottom: 6px;
-    }
-    
-    .request-value {
-        font-size: 19px;
-        font-weight: 600;
-        line-height: 1.4;
-    }
-    
-    .request-value a {
-        font-size: 20px !important;
-    }
-    
-    .request-actions {
-        gap: 12px;
-        margin-top: 20px;
-    }
-    
-    .request-actions button {
-        padding: 18px !important;
-        font-size: 18px !important;
-        min-height: 60px;
-    }
-    
-    .status-badge {
-        padding: 8px 16px;
-        font-size: 16px;
-        margin-top: 12px;
-    }
-    
-    /* تكبير الرسائل السريعة */
-    .quick-msg-btn {
-        padding: 14px 20px;
-        font-size: 16px;
-        min-height: 50px;
-    }
-    
-    .chat-message {
-        padding: 14px;
-        font-size: 17px;
-    }
-    
-    /* تكبير الخرائط في النماذج */
-    .map-selector {
-        height: 280px;
-        margin-top: 12px;
-    }
-    
-    .map-selector::after {
-        font-size: 16px;
-        padding: 12px 20px;
-    }
-    
-    .location-display {
-        padding: 15px;
-        font-size: 16px;
-        margin-top: 12px;
-    }
-    
-    /* تكبير زر الإلغاء */
-    #cancelRequestBtn {
-        bottom: 90px !important;
-        right: 15px !important;
-        padding: 20px 35px !important;
-        font-size: 20px !important;
-        min-height: 65px;
-    }
-    
-    #cancelRequestBtn span {
-        font-size: 24px;
-    }
-    
-    /* تكبير نظام التقييم */
-    .rating-stars {
-        font-size: 42px !important;
-        gap: 15px;
-    }
-    
-    .rating-comment {
-        min-height: 100px;
-        font-size: 17px;
-        padding: 15px;
-    }
-    
-    /* تحسين لوحة الإدارة على الهاتف */
-    .admin-section {
-        padding: 20px 15px;
-        margin-bottom: 20px;
-    }
-    
-    .admin-section-title {
-        font-size: 22px;
-        margin-bottom: 18px;
-    }
-    
-    .admin-stats > div {
-        font-size: 36px;
-    }
-    
-    .request-card {
-        padding: 18px;
-        font-size: 17px;
-    }
-    
-    /* تحسين Close Button */
-    .close-btn {
-        width: 50px;
-        height: 50px;
-        font-size: 28px;
-    }
-    
-    .close-panel-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 24px;
-    }
-}
-
-/* تحسينات إضافية للشاشات الصغيرة جداً */
-@media (max-width: 480px) {
-    .banner-title {
-        font-size: 20px;
-    }
-    
-    .banner-subtitle {
-        font-size: 14px;
-    }
-    
-    .logo {
-        font-size: 18px;
-    }
-    
-    .header-actions .btn {
-        font-size: 16px;
-        padding: 14px 18px !important;
-    }
-}
-
-/* تحسين الـ Popup للطلبات */
-.leaflet-popup-content-wrapper {
-    border-radius: 20px !important;
-}
-
-.leaflet-popup-content {
-    margin: 0 !important;
-    font-size: 17px;
-}
-
-/* تحسين أيقونة التكسي للمستخدم */
-@media (max-width: 768px) {
-    .driver-location-icon div {
-        font-size: 60px !important;
-    }
-}
-
-</style>
+    </style>
 </head>
 <body>
-    <!-- Phone Gate Modal -->
-    <div class="phone-gate-modal active" id="phoneGateModal">
-        <div class="phone-gate-content">
-            <div class="phone-gate-icon">🚕</div>
-            <h1 class="phone-gate-title">مرحباً بك في تكسي طولكرم</h1>
-            <p class="phone-gate-subtitle">للمتابعة، يرجى إدخال رقم هاتفك لضمان الجدية في التعامل</p>
-            <form id="phoneGateForm">
-                <div class="phone-input-container">
-                    <span class="phone-prefix">+970</span>
-                    <input type="tel" class="phone-input" id="gatePhone" placeholder="599123456" maxlength="10" pattern="[0-9]{9,10}">
-                </div>
-                <button type="button" class="btn btn-primary" style="width: 100%; font-size: 20px; padding: 18px;" id="phoneSubmitBtn">
-                    <span>✓</span>
-                    <span>دخول</span>
-                </button>
-            </form>
-        </div>
-    </div>
 
     <!-- Header -->
     <header class="header">
@@ -1668,23 +351,13 @@
             <span>تكسي طولكرم</span>
             <span class="online-indicator" id="onlineIndicator" style="display: none;"></span>
         </div>
-        
         <div class="header-actions">
-            <button class="btn btn-admin" id="adminBtn">
-                <span>⚙️</span>
-                <span>إدارة</span>
-            </button>
-            <button class="btn btn-secondary" id="driverBtn">
-                <span>👨‍💼</span>
-                <span>دخول</span>
-            </button>
-            <button class="btn btn-primary" id="requestBtn">
-                <span>🚖</span>
-                <span>طلب تكسي</span>
-            </button>
+            <button class="btn btn-admin" id="adminBtn"><span>⚙️</span><span>إدارة</span></button>
+            <button class="btn btn-secondary" id="driverBtn"><span>👨‍💼</span><span>دخول</span></button>
+            <button class="btn btn-primary" id="requestBtn"><span>🚖</span><span>طلب تكسي</span></button>
         </div>
     </header>
-    
+
     <!-- Hero Banner -->
     <div class="hero-banner">
         <div class="banner-content">
@@ -1692,43 +365,25 @@
             <div class="banner-subtitle">أفضل خدمة تكسي في المدينة - متاحة 24/7</div>
         </div>
         <div class="banner-features">
-            <div class="feature-item">
-                <div class="feature-icon">⚡</div>
-                <div class="feature-text">سرعة الاستجابة</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">💰</div>
-                <div class="feature-text">أسعار تنافسية</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">🛡️</div>
-                <div class="feature-text">أمان وراحة</div>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">⭐</div>
-                <div class="feature-text">سائقون محترفون</div>
-            </div>
+            <div class="feature-item"><div class="feature-icon">⚡</div><div class="feature-text">سرعة الاستجابة</div></div>
+            <div class="feature-item"><div class="feature-icon">💰</div><div class="feature-text">أسعار تنافسية</div></div>
+            <div class="feature-item"><div class="feature-icon">🛡️</div><div class="feature-text">أمان وراحة</div></div>
+            <div class="feature-item"><div class="feature-icon">⭐</div><div class="feature-text">سائقون محترفون</div></div>
         </div>
     </div>
-    
+
     <!-- WhatsApp Button -->
-    <button class="whatsapp-btn" id="whatsappBtn" title="تواصل معنا عبر واتساب">
-        <span>💬</span>
-    </button>
-    
+    <button class="whatsapp-btn" id="whatsappBtn" title="تواصل معنا عبر واتساب"><span>💬</span></button>
+
     <!-- Mail Button (Driver Only) -->
     <button class="btn btn-mail" id="mailBtn" style="display: none;">
-        <span>📧</span>
-        <span>الطلبات</span>
+        <span>📧</span><span>الطلبات</span>
         <span class="badge" id="requestCount" style="background: var(--danger); color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-right: 5px; display: none;"></span>
     </button>
-    
+
     <!-- Toggle Drivers Panel Button -->
-    <button class="btn btn-toggle-panel" id="togglePanelBtn">
-        <span>👥</span>
-        <span>السائقون</span>
-    </button>
-    
+    <button class="btn btn-toggle-panel" id="togglePanelBtn"><span>👥</span><span>السائقون</span></button>
+
     <!-- Active Drivers Panel -->
     <div class="drivers-panel" id="driversPanel">
         <div class="panel-header">
@@ -1739,13 +394,11 @@
             <p style="text-align: center; color: #999; padding: 20px;">لا يوجد سائقون متصلون حالياً</p>
         </div>
     </div>
-    
+
     <!-- Map Container -->
-    <div class="map-container">
-        <div id="map"></div>
-    </div>
-    
-    <!-- Driver Login Modal -->
+    <div class="map-container"><div id="map"></div></div>
+
+    <!-- Driver Login Modal - رقم هاتف فقط -->
     <div class="modal" id="driverModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1754,31 +407,19 @@
             </div>
             <form id="driverForm">
                 <div class="form-group">
-                    <label class="form-label">الاسم الكامل</label>
-                    <input type="text" class="form-input" id="driverName" placeholder="أدخل اسمك الكامل" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">رقم الهاتف</label>
-                    <input type="tel" class="form-input" id="driverPhone" placeholder="05xxxxxxxx" required maxlength="10" pattern="05[0-9]{8}">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">كلمة السر</label>
-                    <input type="password" class="form-input" id="driverPassword" placeholder="أدخل كلمة السر" required>
-                </div>
-                <div class="form-group">
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="checkbox" id="showPhoneToCustomer" checked style="width: 20px; height: 20px;">
-                        <span>إظهار رقم الهاتف للزبائن</span>
-                    </label>
+                    <label class="form-label">رقم هاتفك</label>
+                    <div class="phone-input-container">
+                        <span class="phone-prefix">+970</span>
+                        <input type="tel" class="phone-input" id="driverPhone" placeholder="599123456" required maxlength="10" pattern="[0-9]{9,10}">
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">
-                    <span>✓</span>
-                    <span>تسجيل الدخول كسائق</span>
+                    <span>🚕</span><span>دخول كسائق</span>
                 </button>
             </form>
         </div>
     </div>
-    
+
     <!-- Admin Modal -->
     <div class="modal" id="adminModal">
         <div class="modal-content" style="max-width: 800px;">
@@ -1791,12 +432,8 @@
                     <label class="form-label">كلمة سر المدير</label>
                     <input type="password" class="form-input" id="adminPassword" placeholder="أدخل كلمة السر" required>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">
-                    <span>✓</span>
-                    <span>دخول</span>
-                </button>
+                <button type="submit" class="btn btn-primary" style="width: 100%;"><span>✓</span><span>دخول</span></button>
             </form>
-            
             <div id="adminPanel" class="admin-dashboard" style="display: none;">
                 <div class="admin-section">
                     <h3 class="admin-section-title">📊 إحصائيات</h3>
@@ -1815,21 +452,14 @@
                         </div>
                     </div>
                 </div>
-                
                 <div class="admin-section">
                     <h3 class="admin-section-title">➕ إضافة طلب جديد</h3>
                     <form id="adminAddRequestForm">
                         <div class="form-group">
                             <label class="form-label">حدد موقع الانطلاق على الخريطة</label>
-                            <button type="button" class="btn btn-secondary" onclick="reloadAdminMap()" style="width: 100%; margin-bottom: 10px;">
-                                <span>🔄</span>
-                                <span>إعادة تحميل الخريطة</span>
-                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="reloadAdminMap()" style="width: 100%; margin-bottom: 10px;"><span>🔄</span><span>إعادة تحميل الخريطة</span></button>
                             <div id="adminPickupMap" class="map-selector"></div>
-                            <div class="location-display" id="adminLocationDisplay" style="display: none;">
-                                <span>📍</span>
-                                <span id="adminLocationText"></span>
-                            </div>
+                            <div class="location-display" id="adminLocationDisplay" style="display: none;"><span>📍</span><span id="adminLocationText"></span></div>
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                             <div class="form-group">
@@ -1845,36 +475,23 @@
                             <label class="form-label">وصف موقع الانطلاق</label>
                             <input type="text" class="form-input" id="adminReqLocation" placeholder="وصف الموقع" required>
                         </div>
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">
-                            <span>➕</span>
-                            <span>إضافة الطلب</span>
-                        </button>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;"><span>➕</span><span>إضافة الطلب</span></button>
                     </form>
                 </div>
-                
                 <div class="admin-section">
                     <h3 class="admin-section-title">📋 جميع الطلبات</h3>
-                    <div class="requests-list" id="adminRequestsList">
-                        <p style="text-align: center; color: #999;">لا توجد طلبات</p>
-                    </div>
+                    <div class="requests-list" id="adminRequestsList"><p style="text-align: center; color: #999;">لا توجد طلبات</p></div>
                 </div>
-                
                 <div class="admin-section">
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-danger" id="logoutAllBtn" style="flex: 1;">
-                            <span>🚪</span>
-                            <span>تسجيل خروج جميع السائقين</span>
-                        </button>
-                        <button class="btn btn-secondary" id="refreshSystemBtn" style="flex: 1;">
-                            <span>🔄</span>
-                            <span>تحديث</span>
-                        </button>
+                        <button class="btn btn-danger" id="logoutAllBtn" style="flex: 1;"><span>🚪</span><span>تسجيل خروج جميع السائقين</span></button>
+                        <button class="btn btn-secondary" id="refreshSystemBtn" style="flex: 1;"><span>🔄</span><span>تحديث</span></button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Request Taxi Modal -->
     <div class="modal" id="requestModal">
         <div class="modal-content">
@@ -1886,40 +503,32 @@
                 <div class="form-group">
                     <label class="form-label">حدد موقعك على الخريطة</label>
                     <div id="pickupMap" class="map-selector"></div>
-                    <div class="location-display" id="locationDisplay" style="display: none;">
-                        <span>📍</span>
-                        <span id="locationText"></span>
+                    <div class="location-display" id="locationDisplay" style="display: none;"><span>📍</span><span id="locationText"></span></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">رقم هاتفك</label>
+                    <div class="phone-input-container" style="border: 2px solid var(--light); border-radius: 12px;">
+                        <span class="phone-prefix" style="font-size:16px; padding: 14px 12px;">+970</span>
+                        <input type="tel" class="phone-input" id="customerPhone" placeholder="599123456" required maxlength="10" pattern="[0-9]{9,10}" style="font-size:16px; padding:14px 15px;">
                     </div>
                 </div>
-                
                 <div class="form-group">
                     <label class="form-label">وصف موقعك (اختياري)</label>
                     <input type="text" class="form-input" id="locationDescription" placeholder="مثال: بجانب المسجد الكبير">
                 </div>
-                
                 <div class="form-group">
                     <label class="form-label">إلى أين تريد الذهاب؟</label>
                     <input type="text" class="form-input" id="destination" placeholder="مثال: المستشفى الحكومي" required>
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label">رقم الهاتف</label>
-                    <input type="tel" class="form-input" id="phoneNumber" readonly>
-                </div>
-                
                 <div class="form-group">
                     <label class="form-label">تفاصيل إضافية (اختياري)</label>
                     <textarea class="form-input" id="requestDetails" placeholder="أي معلومات إضافية تساعد السائق..."></textarea>
                 </div>
-                
-                <button type="submit" class="btn btn-primary" style="width: 100%;">
-                    <span>📍</span>
-                    <span>إرسال الطلب</span>
-                </button>
+                <button type="submit" class="btn btn-primary" style="width: 100%;"><span>📍</span><span>إرسال الطلب</span></button>
             </form>
         </div>
     </div>
-    
+
     <!-- Notification -->
     <div class="notification" id="notification">
         <div class="notification-header">
@@ -1928,19 +537,17 @@
         </div>
         <div class="notification-body" id="notificationBody"></div>
     </div>
-    
+
     <!-- Loading Spinner -->
-    <div class="loading" id="loading">
-        <div class="spinner"></div>
-    </div>
-    
+    <div class="loading" id="loading"><div class="spinner"></div></div>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
+
     <!-- App JavaScript -->
     <script src="app.js"></script>
 </body>
