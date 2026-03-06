@@ -697,16 +697,18 @@ function initEvents() {
 
     // ===== زر إرسال الطلب =====
     document.getElementById('sendRequestBtn').onclick = async function() {
-        if (!userLoc) { notify('خطأ','حدد موقعك على الخريطة أولاً'); return; }
+        if (!userLoc) { notify('خطأ ❌','حدد موقعك على الخريطة أولاً'); return; }
 
         const rawPhone = document.getElementById('custPhone').value.trim();
-        if (!rawPhone) { notify('خطأ','أدخل رقم هاتفك'); return; }
-        if (!/^[0-9]{7,10}$/.test(rawPhone)) { notify('خطأ','رقم الهاتف غير صحيح'); return; }
+        if (!rawPhone) { notify('خطأ ❌','أدخل رقم هاتفك'); return; }
+        // قبل أي عدد أرقام بين 7 و 12
+        const cleanPhone = rawPhone.replace(/[\s\-\+]/g,'');
+        if (!/^[0-9]{7,12}$/.test(cleanPhone)) { notify('خطأ ❌','رقم الهاتف غير صحيح'); return; }
 
         const dest = document.getElementById('destination').value.trim();
-        if (!dest) { notify('خطأ','أدخل وجهتك'); return; }
+        if (!dest) { notify('خطأ ❌','أدخل وجهتك'); return; }
 
-        const phone = normalizePhone(rawPhone);
+        const phone = normalizePhone(cleanPhone);
         const loc = { lat: userLoc.lat, lng: userLoc.lng };
         const locDesc = document.getElementById('locDesc').value.trim();
         const details = document.getElementById('reqDetails').value.trim();
@@ -714,21 +716,25 @@ function initEvents() {
         showLoad();
         try {
             const rid = 'request_' + Date.now();
-            await db.ref('requests/' + rid).set({
-                id: rid, location: loc,
+            const reqData = {
+                id: rid,
+                location: loc,
                 locationDescription: locDesc || '',
-                destination: dest, phone, details,
+                destination: dest,
+                phone: phone,
+                details: details || '',
                 status: 'pending',
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
                 createdAt: new Date().toISOString(),
                 notifiedNearby: false
-            });
+            };
+            await db.ref('requests/' + rid).set(reqData);
             closeModal('requestModal');
             notify('تم ✅','تم إرسال طلبك! جاري البحث عن سائق...');
             startCircleSearch(rid, loc);
             watchMyRequest(rid, phone);
         } catch(err) {
-            notify('خطأ','حدث خطأ: ' + err.message);
+            console.error('Request error:', err);
+            notify('خطأ ❌','فشل إرسال الطلب: ' + (err.message || err.code || 'تحقق من الاتصال'));
         } finally {
             hideLoad();
         }
@@ -878,26 +884,59 @@ async function logoutDriver() {
 
 // ==================== GPS ====================
 function startGPS() {
-    if (!currentUser.isDriver || !navigator.geolocation) return;
-    const opt = { enableHighAccuracy:true, timeout:30000, maximumAge:0 };
-    const update = () => navigator.geolocation.getCurrentPosition(pos => {
-        if (currentUser.driverId) db.ref('drivers/' + currentUser.driverId + '/location').set({
-            lat: pos.coords.latitude, lng: pos.coords.longitude,
-            accuracy: pos.coords.accuracy, timestamp: Date.now()
+    if (!currentUser.isDriver) return;
+    if (!navigator.geolocation) {
+        notify('تنبيه ⚠️', 'جهازك لا يدعم تحديد الموقع', 6000);
+        return;
+    }
+
+    const opt = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
+
+    const doUpdate = (pos) => {
+        if (!currentUser.driverId) return;
+        const loc = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: pos.coords.accuracy,
+            timestamp: Date.now()
+        };
+        // حفظ الموقع وتحديث lastSeen في نفس الوقت
+        db.ref('drivers/' + currentUser.driverId).update({
+            location: loc,
+            lastSeen: Date.now(),
+            online: true
         });
-    }, ()=>{}, opt);
-    navigator.geolocation.getCurrentPosition(() => {
-        notify('GPS 📍','تم تفعيل تتبع موقعك', 3000);
-        update();
-        gpsInterval = setInterval(() => {
-            if (currentUser.isDriver) update();
-            else { clearInterval(gpsInterval); gpsInterval = null; }
-        }, 6000);
-    }, () => notify('تنبيه','اسمح بالوصول للموقع', 6000), opt);
+    };
+
+    const onError = (err) => {
+        if (err.code === 1) {
+            // المستخدم رفض الإذن
+            notify('⚠️ مهم!', 'يجب السماح بالموقع لكي يراك العملاء. افتح إعدادات المتصفح واسمح بالموقع', 10000);
+        }
+    };
+
+    // اطلب الإذن فوراً
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            notify('📍 GPS', 'تم تفعيل تتبع موقعك - العملاء يستطيعون رؤيتك', 4000);
+            doUpdate(pos);
+            // تحديث كل 6 ثوان
+            if (gpsInterval) clearInterval(gpsInterval);
+            gpsInterval = setInterval(() => {
+                if (!currentUser.isDriver) { clearInterval(gpsInterval); gpsInterval = null; return; }
+                navigator.geolocation.getCurrentPosition(doUpdate, onError, opt);
+            }, 6000);
+        },
+        onError,
+        opt
+    );
 }
+
 function stopGPS() {
     if (gpsInterval) { clearInterval(gpsInterval); gpsInterval = null; }
-    if (currentUser.driverId) db.ref('drivers/' + currentUser.driverId + '/location').remove();
+    if (currentUser.driverId) {
+        db.ref('drivers/' + currentUser.driverId + '/location').remove();
+    }
 }
 
 // ==================== TRACK DRIVER ====================
@@ -1005,49 +1044,66 @@ window.centerAdminMap = function() {
 
 // ==================== LISTEN REQUESTS ====================
 function listenRequests() {
-    // الطلبات المعلقة للسائق
-    db.ref('requests').orderByChild('status').equalTo('pending').on('value', snap => {
-        const reqs = snap.val() || {};
-        // إزالة العلامات القديمة
+    db.ref('requests').on('value', snap => {
+        const allReqs = snap.val() || {};
+        let pendingCount = 0;
+
+        // إزالة العلامات للطلبات غير الموجودة أو المكتملة
         Object.keys(requestMarkers).forEach(id => {
-            if (!reqs[id]) { map.removeLayer(requestMarkers[id]); delete requestMarkers[id]; }
+            const r = allReqs[id];
+            if (!r || !['pending'].includes(r.status)) {
+                map.removeLayer(requestMarkers[id]);
+                delete requestMarkers[id];
+            }
         });
-        let cnt = 0;
-        Object.entries(reqs).forEach(([rid, req]) => {
+
+        // إضافة علامات الطلبات الجديدة
+        Object.entries(allReqs).forEach(([rid, req]) => {
             if (req.status !== 'pending') return;
-            cnt++;
+            pendingCount++;
             if (!requestMarkers[rid]) {
                 const mk = L.marker([req.location.lat, req.location.lng], { icon: reqIcon }).addTo(map);
-                mk.on('click', () => showReqPopup(req, mk));
+                mk.on('click', () => {
+                    // جلب أحدث بيانات الطلب عند الضغط
+                    db.ref('requests/' + rid).once('value', s => {
+                        const fresh = s.val();
+                        if (fresh) showReqPopup(fresh, mk);
+                    });
+                });
                 requestMarkers[rid] = mk;
+
+                // إشعار السائق بطلب جديد
                 if (currentUser.isDriver) {
-                    notify('🚨 طلب جديد!', req.phone + ' ← ' + req.destination, 8000);
+                    notify('🚨 طلب جديد!', '📍 ' + req.destination + ' | ' + req.phone, 10000);
+                    // صوت
+                    try {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        const osc = ctx.createOscillator();
+                        osc.connect(ctx.destination);
+                        osc.frequency.setValueAtTime(800, ctx.currentTime);
+                        osc.frequency.setValueAtTime(600, ctx.currentTime + 0.1);
+                        osc.frequency.setValueAtTime(800, ctx.currentTime + 0.2);
+                        osc.start(); osc.stop(ctx.currentTime + 0.3);
+                    } catch(e) {}
                 }
             }
         });
-        const badge = document.getElementById('reqCount');
-        if (cnt > 0 && currentUser.isDriver) { badge.textContent = cnt; badge.style.display = 'inline-block'; }
-        else badge.style.display = 'none';
-    });
 
-    // مراقبة الطلبات المقبولة لإظهار التكسي على خريطة العميل
-    db.ref('requests').on('value', snap => {
-        const allReqs = snap.val() || {};
-        // إزالة علامات الطلبات المكتملة/الملغاة من الخريطة
-        Object.entries(allReqs).forEach(([rid, req]) => {
-            if (['completed','cancelled_by_customer','stopped_by_customer'].includes(req.status)) {
-                if (requestMarkers[rid]) { map.removeLayer(requestMarkers[rid]); delete requestMarkers[rid]; }
-            }
-        });
+        const badge = document.getElementById('reqCount');
+        if (pendingCount > 0 && currentUser.isDriver) {
+            badge.textContent = pendingCount;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
     });
 }
 
 function listenDriversList() {
     db.ref('drivers').orderByChild('online').equalTo(true).on('value', snap => {
         const drivers = snap.val() || {};
-        const fiveMin = Date.now() - 5*60*1000;
-        const online = Object.entries(drivers).filter(([id,d]) => d.online && d.lastSeen >= fiveMin);
         const list = document.getElementById('driversList');
+        const online = Object.entries(drivers).filter(([id,d]) => d.online === true);
         if (!online.length) {
             list.innerHTML = '<p style="text-align:center;color:#999;padding:20px">لا يوجد سائقون الآن</p>';
             return;
@@ -1315,44 +1371,43 @@ window.doneReq = async function(rid) {
 
 // ==================== CIRCLE SEARCH ====================
 function startCircleSearch(rid, loc) {
-    let radius = 200;
-    const circle = L.circle([loc.lat,loc.lng], {
-        color:'#FF6B35', fillColor:'#FF6B35', fillOpacity:0.04,
-        radius, weight:1.5, dashArray:'6,6'
+    let radius = 500;
+    const circle = L.circle([loc.lat, loc.lng], {
+        color: '#FF6B35', fillColor: '#FF6B35',
+        fillOpacity: 0.04, radius, weight: 1.5, dashArray: '6,6'
     }).addTo(map);
     expandingCircles[rid] = circle;
+    map.setView([loc.lat, loc.lng], 14);
 
-    async function search() {
-        const snap = await db.ref('drivers').orderByChild('online').equalTo(true).once('value');
+    // أبلغ كل السائقين المتصلين فوراً بالطلب الجديد
+    db.ref('drivers').orderByChild('online').equalTo(true).once('value', snap => {
         const drivers = snap.val() || {};
-        let best = null, minD = Infinity;
-        for (const [did,d] of Object.entries(drivers)) {
-            if (d.isBooked || !d.location) continue;
-            const dist = calcDist(loc.lat,loc.lng,d.location.lat,d.location.lng)*1000;
-            if (dist <= radius && dist < minD) { best = {did,d,dist}; minD = dist; }
+        const onlineCount = Object.keys(drivers).length;
+        if (onlineCount > 0) {
+            // الطلب موجود في Firebase - السائقين يشوفونه تلقائياً عبر listenRequests
+            notify('📡 جاري البحث...', 'يوجد ' + onlineCount + ' سائق متصل', 4000);
+        } else {
+            notify('⚠️ تنبيه', 'لا يوجد سائقون متصلون الآن، سيصلك تنبيه عند توفر سائق', 8000);
         }
-        if (best) {
-            clearInterval(circleIntervals[rid]); delete circleIntervals[rid];
-            await db.ref('requests/' + rid).update({ targetDriver:best.did, sentToDriverAt:Date.now() });
-            setTimeout(() => { if(expandingCircles[rid]){map.removeLayer(expandingCircles[rid]);delete expandingCircles[rid];} }, 1500);
-            return true;
-        }
-        return false;
-    }
+    });
 
-    // زيادة أبطأ وأخف: كل 3 ثوان بدل 1، وزيادة 300 متر بدل 500
-    circleIntervals[rid] = setInterval(async() => {
-        radius += 300; circle.setRadius(radius);
-        const found = await search();
-        if (found || radius >= 30000) {
-            clearInterval(circleIntervals[rid]); delete circleIntervals[rid];
-            if (!found) {
-                notify('تنبيه','لم يتم إيجاد سائق قريب، جاري الانتظار...', 8000);
-                if (expandingCircles[rid]) { map.removeLayer(expandingCircles[rid]); delete expandingCircles[rid]; }
+    // الدائرة تكبر ببطء للإشارة فقط - ليست للبحث
+    let steps = 0;
+    circleIntervals[rid] = setInterval(() => {
+        steps++;
+        radius += 200;
+        if (circle) circle.setRadius(radius);
+
+        // بعد 30 ثانية إذا ما في سائق قبل، أوقف الدائرة
+        if (steps >= 20 || radius >= 5000) {
+            clearInterval(circleIntervals[rid]);
+            delete circleIntervals[rid];
+            if (expandingCircles[rid]) {
+                map.removeLayer(expandingCircles[rid]);
+                delete expandingCircles[rid];
             }
         }
-    }, 3000);
-    search();
+    }, 1500);
 }
 
 // ==================== ADMIN STATS ====================
