@@ -1,554 +1,1083 @@
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تكسي طولكرم - خدمة سيارات الأجرة الذكية</title>
+    <title>تكسي طولكرم</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #FF6B35;
-            --primary-dark: #E85A28;
-            --secondary: #004E89;
-            --accent: #F7B801;
-            --dark: #1A1A2E;
-            --light: #F8F9FA;
-            --success: #00D9A5;
-            --danger: #FF4757;
-            --shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
-            --shadow-md: 0 4px 16px rgba(0,0,0,0.15);
+            --primary: #FF6B35; --primary-dark: #E85A28; --secondary: #004E89;
+            --accent: #F7B801; --dark: #1A1A2E; --light: #F8F9FA;
+            --success: #00D9A5; --danger: #FF4757;
             --shadow-lg: 0 8px 32px rgba(0,0,0,0.2);
             --gradient-primary: linear-gradient(135deg, #FF6B35 0%, #F7B801 100%);
             --gradient-dark: linear-gradient(135deg, #1A1A2E 0%, #004E89 100%);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--light); overflow-x: hidden; }
-        .hero-banner {
-            position: fixed; top: 80px; left: 0; right: 0; height: 150px;
-            background: var(--gradient-primary); z-index: 500;
-            display: flex; align-items: center; justify-content: space-around;
-            padding: 20px; box-shadow: var(--shadow-lg); animation: slideDown 0.8s ease-out;
-        }
-        .banner-content { text-align: center; color: white; }
-        .banner-title { font-family: 'Cairo', sans-serif; font-size: 32px; font-weight: 900; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-        .banner-subtitle { font-size: 18px; font-weight: 500; }
-        .banner-features { display: flex; gap: 30px; }
-        .feature-item { text-align: center; color: white; }
-        .feature-icon { font-size: 48px; margin-bottom: 8px; }
-        .feature-text { font-size: 14px; font-weight: 600; }
-        .whatsapp-btn {
-            position: fixed; bottom: 20px; left: 20px; z-index: 1000;
-            width: 60px; height: 60px; background: #25D366; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; box-shadow: var(--shadow-lg); animation: pulse 2s infinite;
-            border: none; font-size: 32px; transition: all 0.3s;
-        }
-        .whatsapp-btn:hover { transform: scale(1.1); box-shadow: 0 8px 32px rgba(37, 211, 102, 0.5); }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Tajawal',sans-serif; background:var(--light); overflow-x:hidden; }
+
+        /* HEADER */
         .header {
-            position: fixed; top: 0; left: 0; right: 0; height: 80px;
-            background: rgba(26, 26, 46, 0.95); backdrop-filter: blur(20px);
-            z-index: 1000; box-shadow: var(--shadow-lg);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 30px; animation: slideDown 0.6s ease-out;
+            position:fixed; top:0; left:0; right:0; height:70px;
+            background:rgba(26,26,46,0.97); backdrop-filter:blur(20px);
+            z-index:1000; box-shadow:var(--shadow-lg);
+            display:flex; align-items:center; justify-content:space-between; padding:0 20px;
         }
-        @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .logo {
-            display: flex; align-items: center; gap: 15px;
-            font-family: 'Cairo', sans-serif; font-size: 28px; font-weight: 900;
-            background: var(--gradient-primary); -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent; background-clip: text;
+            display:flex; align-items:center; gap:10px;
+            font-family:'Cairo',sans-serif; font-size:22px; font-weight:900;
+            background:var(--gradient-primary); -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent; background-clip:text;
         }
         .logo-icon {
-            width: 45px; height: 45px; background: var(--gradient-primary);
-            border-radius: 12px; display: flex; align-items: center; justify-content: center;
-            font-size: 24px; animation: rotate 20s linear infinite;
+            width:40px; height:40px; background:var(--gradient-primary);
+            border-radius:10px; display:flex; align-items:center; justify-content:center;
+            font-size:22px; flex-shrink:0;
         }
-        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .header-actions { display: flex; gap: 15px; }
+        .online-dot { width:10px; height:10px; background:var(--success); border-radius:50%; animation:blink 2s infinite; }
+        .header-actions { display:flex; gap:8px; }
+
+        /* BANNER */
+        .hero-banner {
+            position:fixed; top:70px; left:0; right:0; height:100px;
+            background:var(--gradient-primary); z-index:500;
+            display:flex; align-items:center; justify-content:center; padding:10px 20px;
+            box-shadow:var(--shadow-lg);
+        }
+        .banner-title { font-family:'Cairo',sans-serif; font-size:24px; font-weight:900; color:white; text-align:center; text-shadow:1px 1px 3px rgba(0,0,0,0.3); }
+        .banner-sub { font-size:14px; color:rgba(255,255,255,0.9); text-align:center; margin-top:4px; }
+
+        /* MAP */
+        .map-container { position:fixed; top:170px; left:0; right:0; bottom:0; z-index:1; }
+        #map { width:100%; height:100%; }
+
+        /* BUTTONS */
         .btn {
-            padding: 12px 28px; border: none; border-radius: 12px;
-            font-family: 'Cairo', sans-serif; font-size: 16px; font-weight: 700;
-            cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative; overflow: hidden; display: flex; align-items: center; gap: 8px;
+            padding:10px 18px; border:none; border-radius:10px;
+            font-family:'Cairo',sans-serif; font-size:14px; font-weight:700;
+            cursor:pointer; display:flex; align-items:center; gap:6px;
+            transition:all 0.2s; position:relative; overflow:hidden;
         }
-        .btn::before {
-            content: ''; position: absolute; top: 50%; left: 50%; width: 0; height: 0;
-            border-radius: 50%; background: rgba(255,255,255,0.3);
-            transform: translate(-50%, -50%); transition: width 0.6s, height 0.6s;
+        .btn-primary { background:var(--gradient-primary); color:white; box-shadow:0 3px 12px rgba(255,107,53,0.4); }
+        .btn-primary:hover { transform:translateY(-1px); }
+        .btn-secondary { background:rgba(255,255,255,0.12); color:white; border:1.5px solid rgba(255,255,255,0.3); }
+        .btn-secondary:hover { background:rgba(255,255,255,0.2); }
+        .btn-admin { background:var(--secondary); color:white; border:1.5px solid var(--accent); }
+        .btn-logout { background:var(--danger); color:white; }
+        .btn-danger { background:var(--danger); color:white; }
+        .btn-success { background:var(--success); color:white; }
+
+        /* FLOATING BTNS */
+        .btn-float {
+            position:fixed; z-index:999; box-shadow:var(--shadow-lg);
+            padding:12px 20px; font-size:15px; border-radius:12px;
         }
-        .btn:hover::before { width: 300px; height: 300px; }
-        .btn-primary { background: var(--gradient-primary); color: white; box-shadow: 0 4px 15px rgba(255,107,53,0.4); }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,107,53,0.5); }
-        .btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 2px solid rgba(255,255,255,0.3); }
-        .btn-secondary:hover { background: rgba(255,255,255,0.2); border-color: var(--accent); }
-        .btn-logout { background: var(--danger); color: white; }
-        .btn-admin { background: var(--secondary); color: white; border: 2px solid var(--accent); }
-        .btn-admin:hover { background: var(--accent); color: var(--dark); }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-danger:hover { background: #e74c3c; transform: translateY(-2px); }
-        .btn-mail {
-            background: var(--secondary); color: white; position: fixed;
-            top: 250px; left: 30px; z-index: 999; box-shadow: var(--shadow-lg); animation: pulse 2s infinite;
+        .btn-mail { top:185px; left:15px; background:var(--secondary); color:white; animation:pulse 2s infinite; }
+        .btn-panel { top:185px; right:15px; background:var(--gradient-primary); color:white; }
+
+        .whatsapp-btn {
+            position:fixed; bottom:20px; left:15px; z-index:1000;
+            width:58px; height:58px; background:#25D366; border-radius:50%;
+            display:flex; align-items:center; justify-content:center;
+            border:none; font-size:30px; cursor:pointer; box-shadow:var(--shadow-lg);
+            animation:pulse 2s infinite;
         }
-        .btn-toggle-panel {
-            background: var(--gradient-primary); color: white; position: fixed;
-            top: 250px; right: 30px; z-index: 999; box-shadow: var(--shadow-lg);
+
+        /* DRIVERS PANEL */
+        .drivers-panel {
+            position:fixed; top:170px; right:10px;
+            width:280px; max-height:calc(100vh - 190px);
+            background:white; border-radius:14px; box-shadow:var(--shadow-lg);
+            z-index:998; overflow:hidden; display:none;
         }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        .map-container { position: fixed; top: 230px; left: 0; right: 0; bottom: 0; z-index: 1; }
-        #map { width: 100%; height: 100%; filter: saturate(1.1) brightness(0.95); }
-        .phone-gate-modal {
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.9); backdrop-filter: blur(15px);
-            z-index: 5000; align-items: center; justify-content: center;
+        .drivers-panel.active { display:block; animation:slideIn 0.3s ease; }
+        @keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+        .panel-head {
+            background:var(--gradient-dark); color:white; padding:12px 16px;
+            display:flex; justify-content:space-between; align-items:center;
+            font-family:'Cairo',sans-serif; font-size:16px; font-weight:700;
         }
-        .phone-gate-modal.active { display: flex; }
-        .phone-gate-content {
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            border-radius: 24px; padding: 50px; max-width: 500px; width: 90%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideUp 0.5s ease-out;
+        .panel-close { background:rgba(255,255,255,0.2); border:none; color:white; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center; }
+        .drivers-list { max-height:calc(100vh - 260px); overflow-y:auto; padding:8px; }
+        .driver-card {
+            background:var(--light); border-radius:10px; padding:10px 12px;
+            margin-bottom:8px; display:flex; align-items:center; gap:10px;
         }
-        .phone-gate-icon { text-align: center; font-size: 100px; margin-bottom: 20px; animation: bounce 1s infinite; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
-        .phone-gate-title {
-            font-family: 'Cairo', sans-serif; font-size: 32px; font-weight: 900;
-            text-align: center; background: var(--gradient-primary);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 15px;
-        }
-        .phone-gate-subtitle { text-align: center; color: #666; font-size: 16px; margin-bottom: 30px; }
-        .phone-input-container {
-            display: flex; align-items: center; background: white;
-            border: 3px solid var(--light); border-radius: 12px; overflow: hidden;
-            transition: all 0.3s; margin-bottom: 20px;
-        }
-        .phone-input-container:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(255,107,53,0.1); }
-        .phone-prefix {
-            padding: 18px 15px; background: var(--light); font-family: 'Cairo', sans-serif;
-            font-weight: 700; color: var(--dark); font-size: 20px; border-left: 2px solid #e0e0e0;
-        }
-        .phone-input {
-            flex: 1; border: none !important; padding: 18px 20px; font-size: 20px;
-            font-family: 'Cairo', sans-serif; font-weight: 600; direction: ltr; text-align: left;
-        }
-        .phone-input:focus { outline: none; }
+        .driver-avatar { width:42px; height:42px; background:var(--gradient-primary); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px; }
+        .driver-name { font-weight:700; font-size:14px; color:var(--dark); }
+        .driver-status { font-size:12px; color:var(--success); display:flex; align-items:center; gap:4px; }
+
+        /* MODALS */
         .modal {
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
-            z-index: 2000; align-items: center; justify-content: center; animation: fadeIn 0.3s ease-out;
+            display:none; position:fixed; inset:0;
+            background:rgba(0,0,0,0.75); backdrop-filter:blur(8px);
+            z-index:2000; align-items:center; justify-content:center;
         }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .modal.active { display: flex; }
-        .modal-content {
-            background: white; border-radius: 24px; padding: 40px;
-            max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;
-            box-shadow: var(--shadow-lg); animation: slideUp 0.4s cubic-bezier(0.4,0,0.2,1); position: relative;
+        .modal.active { display:flex; }
+        .modal-box {
+            background:white; border-radius:20px; padding:30px 25px;
+            width:90%; max-width:480px; max-height:90vh; overflow-y:auto;
+            box-shadow:var(--shadow-lg); animation:popUp 0.35s ease;
         }
-        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .modal-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid var(--light);
+        .modal-box.wide { max-width:750px; }
+        @keyframes popUp { from{transform:translateY(40px);opacity:0} to{transform:translateY(0);opacity:1} }
+        .modal-head {
+            display:flex; justify-content:space-between; align-items:center;
+            margin-bottom:24px; padding-bottom:16px; border-bottom:2px solid var(--light);
         }
         .modal-title {
-            font-family: 'Cairo', sans-serif; font-size: 28px; font-weight: 900;
-            background: var(--gradient-primary); -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent; background-clip: text;
+            font-family:'Cairo',sans-serif; font-size:24px; font-weight:900;
+            background:var(--gradient-primary); -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent; background-clip:text;
         }
-        .close-btn {
-            width: 40px; height: 40px; border: none; background: var(--light);
-            border-radius: 50%; cursor: pointer; font-size: 24px;
-            display: flex; align-items: center; justify-content: center; transition: all 0.3s;
+        .close-x {
+            width:36px; height:36px; border:none; background:var(--light);
+            border-radius:50%; cursor:pointer; font-size:20px;
+            display:flex; align-items:center; justify-content:center; transition:all 0.2s;
         }
-        .close-btn:hover { background: var(--danger); color: white; transform: rotate(90deg); }
-        .form-group { margin-bottom: 24px; }
-        .form-label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--dark); font-size: 15px; }
-        .form-input {
-            width: 100%; padding: 14px 18px; border: 2px solid var(--light);
-            border-radius: 12px; font-family: 'Tajawal', sans-serif; font-size: 15px;
-            transition: all 0.3s; background: var(--light);
-        }
-        .form-input:focus { outline: none; border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(255,107,53,0.1); }
-        textarea.form-input { min-height: 100px; resize: vertical; }
-        .map-selector {
-            height: 300px; border-radius: 12px; overflow: hidden;
-            border: 2px solid var(--light); margin-top: 8px; position: relative;
-        }
-        .map-selector::after {
-            content: '📍 اضغط على الخريطة لتحديد موقعك';
-            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-            background: rgba(255,107,53,0.95); color: white; padding: 8px 15px;
-            border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 1000; pointer-events: none;
-        }
-        .location-display {
-            background: var(--light); padding: 12px; border-radius: 8px;
-            margin-top: 8px; font-size: 14px; color: var(--secondary);
-            display: flex; align-items: center; gap: 8px;
-        }
-        .badge { display: inline-block; min-width: 20px; padding: 2px 6px; border-radius: 10px; font-size: 11px; font-weight: 700; text-align: center; }
-        .drivers-panel {
-            position: fixed; top: 250px; right: 20px; width: 300px;
-            max-height: calc(100vh - 270px); background: white; border-radius: 16px;
-            box-shadow: var(--shadow-lg); z-index: 999; overflow: hidden;
-            display: none; animation: slideInRight 0.3s ease-out;
-        }
-        .drivers-panel.active { display: block; }
-        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .panel-header {
-            background: var(--gradient-dark); color: white; padding: 15px 20px;
-            font-family: 'Cairo', sans-serif; display: flex; justify-content: space-between; align-items: center;
-        }
-        .panel-header h3 { font-size: 18px; font-weight: 700; margin: 0; }
-        .close-panel-btn {
-            width: 30px; height: 30px; border: none; background: rgba(255,255,255,0.2);
-            color: white; border-radius: 50%; cursor: pointer; font-size: 20px;
-            display: flex; align-items: center; justify-content: center; transition: all 0.3s;
-        }
-        .close-panel-btn:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg); }
-        .drivers-list { max-height: calc(100vh - 350px); overflow-y: auto; padding: 10px; }
-        .driver-card {
-            background: var(--light); padding: 12px 15px; border-radius: 12px;
-            margin-bottom: 10px; display: flex; align-items: center; gap: 12px; transition: all 0.3s;
-        }
-        .driver-card:hover { background: #e8f5e9; transform: translateX(-5px); }
-        .driver-avatar { width: 45px; height: 45px; background: var(--gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        .driver-info { flex: 1; }
-        .driver-name { font-weight: 700; font-size: 15px; color: var(--dark); margin-bottom: 4px; }
-        .driver-status { font-size: 12px; color: var(--success); display: flex; align-items: center; gap: 5px; }
-        .driver-rating { font-size: 13px; color: var(--accent); }
-        .notification {
-            position: fixed; top: 100px; right: 30px; background: white;
-            padding: 20px 25px; border-radius: 16px; box-shadow: var(--shadow-lg);
-            z-index: 3000; display: none; animation: slideInRight 0.4s ease-out; max-width: 350px;
-        }
-        .notification.active { display: block; }
-        .notification-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-        .notification-icon { width: 45px; height: 45px; border-radius: 50%; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        .notification-title { font-weight: 700; font-size: 18px; color: var(--dark); }
-        .notification-body { color: #666; line-height: 1.6; font-size: 14px; }
-        .chat-messages { max-height: 200px; overflow-y: auto; margin: 15px 0; padding: 10px; background: var(--light); border-radius: 8px; }
-        .chat-message { padding: 8px 12px; margin-bottom: 8px; border-radius: 8px; background: white; border-left: 3px solid var(--primary); }
-        .message-text { font-size: 14px; color: var(--dark); }
-        .message-time { font-size: 11px; color: #999; margin-top: 4px; }
-        .quick-messages { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-        .quick-msg-btn { padding: 8px 15px; background: var(--light); border: 2px solid var(--primary); border-radius: 20px; font-size: 13px; cursor: pointer; transition: all 0.3s; color: var(--primary); font-weight: 600; }
-        .quick-msg-btn:hover { background: var(--primary); color: white; }
-        .request-popup { padding: 20px; min-width: 280px; }
-        .request-popup h3 { font-family: 'Cairo', sans-serif; font-size: 20px; margin-bottom: 15px; color: var(--dark); }
-        .request-info { margin-bottom: 12px; }
-        .request-label { font-weight: 600; color: var(--secondary); font-size: 13px; margin-bottom: 4px; }
-        .request-value { color: var(--dark); font-size: 15px; }
-        .request-actions { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-accept { flex: 1; background: var(--success); color: white; padding: 10px; font-size: 14px; }
-        .btn-reject { flex: 1; background: var(--danger); color: white; padding: 10px; font-size: 14px; }
-        .btn-arrived { flex: 1; background: var(--accent); color: var(--dark); font-weight: 700; }
-        .btn-complete { flex: 1; background: #6c5ce7; color: white; }
-        .rating-container { margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 12px; }
-        .rating-stars { display: flex; gap: 10px; justify-content: center; font-size: 32px; margin: 15px 0; }
-        .star { cursor: pointer; transition: all 0.2s; filter: grayscale(100%); }
-        .star:hover, .star.active { filter: grayscale(0%); transform: scale(1.2); }
-        .rating-comment { width: 100%; margin-top: 10px; padding: 10px; border: 2px solid var(--light); border-radius: 8px; font-family: 'Tajawal', sans-serif; resize: vertical; min-height: 60px; }
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-top: 8px; }
-        .status-pending { background: #ffeaa7; color: #d63031; }
-        .status-accepted { background: #55efc4; color: #00b894; }
-        .loading { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 4000; }
-        .loading.active { display: block; }
-        .spinner { width: 60px; height: 60px; border: 4px solid rgba(255,107,53,0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .online-indicator { width: 12px; height: 12px; background: var(--success); border-radius: 50%; display: inline-block; margin-left: 8px; animation: blink 2s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        .admin-dashboard { max-height: 70vh; overflow-y: auto; }
-        .admin-section { margin-bottom: 30px; padding: 20px; background: var(--light); border-radius: 12px; }
-        .admin-section-title { font-family: 'Cairo', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 15px; color: var(--dark); }
-        .requests-list { max-height: 400px; overflow-y: auto; }
-        .request-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
-        .request-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: var(--light); }
-        ::-webkit-scrollbar-thumb { background: var(--gradient-primary); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary-dark); }
-        .leaflet-popup-content-wrapper { border-radius: 20px !important; }
-        .leaflet-popup-content { margin: 0 !important; font-size: 17px; }
+        .close-x:hover { background:var(--danger); color:white; transform:rotate(90deg); }
 
-        @media (max-width: 768px) {
-            .hero-banner { height: 120px; padding: 15px 10px; }
-            .banner-title { font-size: 24px; line-height: 1.3; }
-            .banner-subtitle { font-size: 16px; }
-            .banner-features { display: none; }
-            .header { padding: 15px 10px; min-height: 90px; }
-            .logo { font-size: 22px; }
-            .logo-icon { width: 45px; height: 45px; font-size: 24px; }
-            .btn { padding: 16px 24px !important; font-size: 18px !important; min-height: 55px; }
-            .btn span { font-size: 20px; }
-            .btn-admin { padding: 16px 24px !important; font-size: 18px !important; }
-            .header-actions { width: 100%; justify-content: space-between; gap: 8px; margin-top: 12px; display: flex; flex-wrap: nowrap; }
-            .header-actions .btn { flex: 1; min-width: 0; padding: 14px 12px !important; font-size: 15px !important; }
-            .map-container { top: 210px; }
-            .btn-mail, .btn-toggle-panel { top: 220px; padding: 18px 26px !important; font-size: 18px !important; min-height: 60px; }
-            .drivers-panel { top: 220px; width: calc(100% - 20px); max-width: 100%; left: 10px; right: 10px; }
-            .panel-header h3 { font-size: 20px; }
-            .driver-card { padding: 18px; margin-bottom: 12px; }
-            .driver-avatar { width: 55px; height: 55px; font-size: 28px; }
-            .driver-name { font-size: 19px; font-weight: 700; }
-            .driver-status { font-size: 16px; }
-            .driver-rating { font-size: 16px; }
-            .modal-content { padding: 35px 25px; width: 96%; }
-            .modal-title { font-size: 26px; }
-            .form-label { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
-            .form-input { padding: 18px !important; font-size: 18px !important; min-height: 58px; }
-            textarea.form-input { min-height: 120px; font-size: 17px; }
-            .form-group { margin-bottom: 28px; }
-            .btn-primary, .btn-secondary { padding: 20px !important; font-size: 20px !important; min-height: 65px; }
-            .notification { right: 10px; left: 10px; max-width: calc(100% - 20px); top: 100px; padding: 25px; }
-            .notification-icon { width: 55px; height: 55px; font-size: 28px; }
-            .notification-title { font-size: 20px; font-weight: 700; }
-            .notification-body { font-size: 18px; line-height: 1.6; }
-            .phone-gate-content { padding: 35px 25px; width: 95%; }
-            .phone-gate-icon { font-size: 90px; }
-            .phone-gate-title { font-size: 26px; }
-            .phone-gate-subtitle { font-size: 18px; }
-            .phone-input-container { margin: 25px 0; }
-            .phone-input { font-size: 20px !important; padding: 20px !important; }
-            .phone-prefix { font-size: 20px !important; padding: 20px 15px !important; }
-            .whatsapp-btn { width: 75px; height: 75px; font-size: 38px; bottom: 90px; left: 15px; }
-            .request-popup { min-width: 100%; padding: 25px; }
-            .request-popup h3 { font-size: 24px; margin-bottom: 20px; }
-            .request-info { margin-bottom: 18px; padding: 12px; background: #f8f9fa; border-radius: 8px; }
-            .request-label { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
-            .request-value { font-size: 19px; font-weight: 600; line-height: 1.4; }
-            .request-value a { font-size: 20px !important; }
-            .request-actions { gap: 12px; margin-top: 20px; }
-            .request-actions button { padding: 18px !important; font-size: 18px !important; min-height: 60px; }
-            .status-badge { padding: 8px 16px; font-size: 16px; margin-top: 12px; }
-            .quick-msg-btn { padding: 14px 20px; font-size: 16px; min-height: 50px; }
-            .chat-message { padding: 14px; font-size: 17px; }
-            .map-selector { height: 280px; margin-top: 12px; }
-            .map-selector::after { font-size: 16px; padding: 12px 20px; }
-            .location-display { padding: 15px; font-size: 16px; margin-top: 12px; }
-            #cancelRequestBtn { bottom: 90px !important; right: 15px !important; padding: 20px 35px !important; font-size: 20px !important; min-height: 65px; }
-            #cancelRequestBtn span { font-size: 24px; }
-            .rating-stars { font-size: 42px !important; gap: 15px; }
-            .rating-comment { min-height: 100px; font-size: 17px; padding: 15px; }
-            .admin-section { padding: 20px 15px; margin-bottom: 20px; }
-            .admin-section-title { font-size: 22px; margin-bottom: 18px; }
-            .request-card { padding: 18px; font-size: 17px; }
-            .close-btn { width: 50px; height: 50px; font-size: 28px; }
-            .close-panel-btn { width: 40px; height: 40px; font-size: 24px; }
-            .driver-location-icon div { font-size: 60px !important; }
+        /* FORMS */
+        .form-group { margin-bottom:20px; }
+        .form-label { display:block; margin-bottom:6px; font-weight:700; color:var(--dark); font-size:15px; }
+        .form-input {
+            width:100%; padding:13px 16px; border:2px solid var(--light);
+            border-radius:10px; font-family:'Tajawal',sans-serif; font-size:15px;
+            background:var(--light); transition:all 0.2s;
         }
-        @media (max-width: 480px) {
-            .banner-title { font-size: 20px; }
-            .banner-subtitle { font-size: 14px; }
-            .logo { font-size: 18px; }
-            .header-actions .btn { font-size: 16px; padding: 14px 18px !important; }
+        .form-input:focus { outline:none; border-color:var(--primary); background:white; box-shadow:0 0 0 3px rgba(255,107,53,0.1); }
+        textarea.form-input { min-height:90px; resize:vertical; }
+
+        .phone-row {
+            display:flex; align-items:center; background:white;
+            border:2px solid var(--light); border-radius:10px; overflow:hidden; transition:all 0.2s;
+        }
+        .phone-row:focus-within { border-color:var(--primary); box-shadow:0 0 0 3px rgba(255,107,53,0.1); }
+        .phone-pre { padding:13px 12px; background:var(--light); font-family:'Cairo',sans-serif; font-weight:700; font-size:16px; color:var(--dark); border-left:2px solid #ddd; white-space:nowrap; }
+        .phone-inp { flex:1; border:none !important; padding:13px 14px; font-size:16px; font-family:'Cairo',sans-serif; font-weight:600; direction:ltr; background:transparent; }
+        .phone-inp:focus { outline:none; }
+
+        .map-selector { height:260px; border-radius:10px; overflow:hidden; border:2px solid var(--light); margin-top:6px; position:relative; }
+        .map-selector::after {
+            content:'📍 اضغط على الخريطة لتحديد موقعك';
+            position:absolute; top:8px; left:50%; transform:translateX(-50%);
+            background:rgba(255,107,53,0.93); color:white; padding:6px 14px;
+            border-radius:20px; font-size:12px; font-weight:700; z-index:1000; pointer-events:none; white-space:nowrap;
+        }
+        .loc-display { background:var(--light); padding:10px 12px; border-radius:8px; margin-top:6px; font-size:13px; color:var(--secondary); display:flex; align-items:center; gap:6px; }
+
+        /* NOTIFICATION */
+        .notification {
+            position:fixed; top:80px; right:15px; background:white;
+            padding:16px 20px; border-radius:14px; box-shadow:var(--shadow-lg);
+            z-index:3000; display:none; max-width:320px; min-width:260px;
+            border-right:4px solid var(--primary);
+        }
+        .notification.active { display:block; animation:slideIn 0.3s ease; }
+        .notif-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+        .notif-icon { width:38px; height:38px; border-radius:50%; background:var(--gradient-primary); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+        .notif-title { font-weight:700; font-size:16px; color:var(--dark); }
+        .notif-body { color:#555; font-size:14px; line-height:1.5; }
+
+        /* LOADING */
+        .loading { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9999; align-items:center; justify-content:center; }
+        .loading.active { display:flex; }
+        .spinner { width:52px; height:52px; border:4px solid rgba(255,107,53,0.25); border-top-color:var(--primary); border-radius:50%; animation:spin 0.9s linear infinite; }
+
+        /* REQUEST POPUP */
+        .req-popup { padding:16px; min-width:260px; max-width:320px; }
+        .req-popup h3 { font-family:'Cairo',sans-serif; font-size:18px; margin-bottom:12px; color:var(--dark); }
+        .req-info { margin-bottom:10px; }
+        .req-label { font-weight:700; color:var(--secondary); font-size:12px; margin-bottom:3px; }
+        .req-value { color:var(--dark); font-size:14px; }
+        .req-actions { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+        .req-actions .btn { flex:1; min-width:80px; justify-content:center; padding:10px; font-size:13px; }
+        .btn-accept { background:var(--success); color:white; }
+        .btn-reject { background:var(--danger); color:white; }
+        .btn-arrived { background:var(--accent); color:var(--dark); font-weight:700; }
+        .btn-complete { background:#6c5ce7; color:white; }
+
+        .status-badge { display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; margin-top:6px; }
+        .status-pending { background:#ffeaa7; color:#d63031; }
+        .status-accepted { background:#55efc4; color:#00b894; }
+
+        .quick-msgs { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+        .qmsg { padding:7px 12px; background:var(--light); border:1.5px solid var(--primary); border-radius:16px; font-size:12px; cursor:pointer; color:var(--primary); font-weight:600; transition:all 0.2s; }
+        .qmsg:hover { background:var(--primary); color:white; }
+
+        /* RATING */
+        .rating-box { padding:16px; background:#f8f9fa; border-radius:12px; margin-top:12px; }
+        .stars { display:flex; gap:8px; justify-content:center; font-size:30px; margin:12px 0; }
+        .star { cursor:pointer; filter:grayscale(1); transition:all 0.2s; }
+        .star:hover,.star.on { filter:grayscale(0); transform:scale(1.2); }
+
+        /* ADMIN */
+        .admin-section { margin-bottom:24px; padding:16px; background:var(--light); border-radius:12px; }
+        .admin-section h3 { font-family:'Cairo',sans-serif; font-size:18px; font-weight:700; margin-bottom:14px; color:var(--dark); }
+        .req-card { background:white; padding:13px; border-radius:10px; margin-bottom:8px; border-right:4px solid var(--primary); }
+        .req-card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+
+        /* ANIMATIONS */
+        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width:6px; }
+        ::-webkit-scrollbar-thumb { background:var(--primary); border-radius:6px; }
+
+        /* LEAFLET POPUP */
+        .leaflet-popup-content-wrapper { border-radius:16px !important; }
+        .leaflet-popup-content { margin:0 !important; }
+
+        /* MOBILE */
+        @media (max-width:600px) {
+            .header { padding:0 12px; height:65px; }
+            .logo { font-size:18px; }
+            .btn { padding:9px 14px; font-size:13px; }
+            .hero-banner { height:85px; top:65px; }
+            .banner-title { font-size:18px; }
+            .map-container { top:150px; }
+            .btn-float { top:163px; }
+            .btn-mail { left:10px; }
+            .btn-panel { right:10px; }
+            .drivers-panel { top:150px; width:calc(100% - 20px); left:10px; right:10px; }
+            .modal-box { padding:22px 16px; width:95%; }
+            .whatsapp-btn { bottom:15px; left:10px; width:52px; height:52px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="logo">
-            <div class="logo-icon">🚕</div>
-            <span>تكسي طولكرم</span>
-            <span class="online-indicator" id="onlineIndicator" style="display: none;"></span>
-        </div>
-        <div class="header-actions">
-            <button class="btn btn-admin" id="adminBtn"><span>⚙️</span><span>إدارة</span></button>
-            <button class="btn btn-secondary" id="driverBtn"><span>👨‍💼</span><span>دخول</span></button>
-            <button class="btn btn-primary" id="requestBtn"><span>🚖</span><span>طلب تكسي</span></button>
-        </div>
-    </header>
-
-    <!-- Hero Banner -->
-    <div class="hero-banner">
-        <div class="banner-content">
-            <div class="banner-title">🚕 تكسي طولكرم - خدمة سريعة وآمنة</div>
-            <div class="banner-subtitle">أفضل خدمة تكسي في المدينة - متاحة 24/7</div>
-        </div>
-        <div class="banner-features">
-            <div class="feature-item"><div class="feature-icon">⚡</div><div class="feature-text">سرعة الاستجابة</div></div>
-            <div class="feature-item"><div class="feature-icon">💰</div><div class="feature-text">أسعار تنافسية</div></div>
-            <div class="feature-item"><div class="feature-icon">🛡️</div><div class="feature-text">أمان وراحة</div></div>
-            <div class="feature-item"><div class="feature-icon">⭐</div><div class="feature-text">سائقون محترفون</div></div>
-        </div>
+<!-- HEADER -->
+<header class="header">
+    <div class="logo">
+        <div class="logo-icon">🚕</div>
+        <span>تكسي طولكرم</span>
+        <span class="online-dot" id="onlineDot" style="display:none; margin-right:6px;"></span>
     </div>
-
-    <!-- WhatsApp Button -->
-    <button class="whatsapp-btn" id="whatsappBtn" title="تواصل معنا عبر واتساب"><span>💬</span></button>
-
-    <!-- Mail Button (Driver Only) -->
-    <button class="btn btn-mail" id="mailBtn" style="display: none;">
-        <span>📧</span><span>الطلبات</span>
-        <span class="badge" id="requestCount" style="background: var(--danger); color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-right: 5px; display: none;"></span>
-    </button>
-
-    <!-- Toggle Drivers Panel Button -->
-    <button class="btn btn-toggle-panel" id="togglePanelBtn"><span>👥</span><span>السائقون</span></button>
-
-    <!-- Active Drivers Panel -->
-    <div class="drivers-panel" id="driversPanel">
-        <div class="panel-header">
-            <h3>🚕 السائقون النشطون</h3>
-            <button class="close-panel-btn" id="closePanelBtn">×</button>
-        </div>
-        <div class="drivers-list" id="driversList">
-            <p style="text-align: center; color: #999; padding: 20px;">لا يوجد سائقون متصلون حالياً</p>
-        </div>
+    <div class="header-actions">
+        <button class="btn btn-admin" id="adminBtn">⚙️ إدارة</button>
+        <button class="btn btn-secondary" id="driverBtn">👨‍💼 دخول</button>
+        <button class="btn btn-primary" id="requestBtn">🚖 طلب تكسي</button>
     </div>
+</header>
 
-    <!-- Map Container -->
-    <div class="map-container"><div id="map"></div></div>
+<!-- BANNER -->
+<div class="hero-banner">
+    <div>
+        <div class="banner-title">🚕 تكسي طولكرم - خدمة سريعة وآمنة</div>
+        <div class="banner-sub">أفضل خدمة تكسي في المدينة · متاحة 24/7</div>
+    </div>
+</div>
 
-    <!-- Driver Login Modal - رقم هاتف فقط -->
-    <div class="modal" id="driverModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">دخول السائق</h2>
-                <button class="close-btn" onclick="closeModal('driverModal')">×</button>
+<!-- FLOATING BTNS -->
+<button class="btn btn-float btn-mail" id="mailBtn" style="display:none;">
+    📧 الطلبات
+    <span id="reqCount" style="background:var(--danger);color:white;padding:1px 7px;border-radius:8px;font-size:11px;margin-right:4px;display:none;"></span>
+</button>
+<button class="btn btn-float btn-panel" id="togglePanel">👥 السائقون</button>
+
+<!-- WHATSAPP -->
+<button class="whatsapp-btn" id="waBtn">💬</button>
+
+<!-- DRIVERS PANEL -->
+<div class="drivers-panel" id="driversPanel">
+    <div class="panel-head">
+        🚕 السائقون النشطون
+        <button class="panel-close" id="closePanel">×</button>
+    </div>
+    <div class="drivers-list" id="driversList">
+        <p style="text-align:center;color:#999;padding:20px">لا يوجد سائقون الآن</p>
+    </div>
+</div>
+
+<!-- MAP -->
+<div class="map-container"><div id="map"></div></div>
+
+<!-- DRIVER MODAL -->
+<div class="modal" id="driverModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h2 class="modal-title">دخول السائق</h2>
+            <button class="close-x" onclick="closeModal('driverModal')">×</button>
+        </div>
+        <form id="driverForm">
+            <div class="form-group">
+                <label class="form-label">رقم هاتفك</label>
+                <div class="phone-row">
+                    <span class="phone-pre">+970</span>
+                    <input type="tel" class="phone-inp" id="driverPhone" placeholder="599123456" required maxlength="10">
+                </div>
             </div>
-            <form id="driverForm">
-                <div class="form-group">
-                    <label class="form-label">رقم هاتفك</label>
-                    <div class="phone-input-container">
-                        <span class="phone-prefix">+970</span>
-                        <input type="tel" class="phone-input" id="driverPhone" placeholder="599123456" required maxlength="10" pattern="[0-9]{9,10}">
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:17px;">
+                🚕 دخول كسائق
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ADMIN MODAL -->
+<div class="modal" id="adminModal">
+    <div class="modal-box wide">
+        <div class="modal-head">
+            <h2 class="modal-title">لوحة الإدارة</h2>
+            <button class="close-x" onclick="closeModal('adminModal')">×</button>
+        </div>
+        <form id="adminLoginForm">
+            <div class="form-group">
+                <label class="form-label">كلمة سر المدير</label>
+                <input type="password" class="form-input" id="adminPass" placeholder="أدخل كلمة السر" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:17px;">✓ دخول</button>
+        </form>
+        <div id="adminPanel" style="display:none;">
+            <!-- Stats -->
+            <div class="admin-section">
+                <h3>📊 إحصائيات</h3>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                    <div style="background:white;padding:14px;border-radius:10px;text-align:center;">
+                        <div style="font-size:28px;font-weight:900;color:var(--success)" id="statDrivers">0</div>
+                        <div style="color:#666;font-size:13px;margin-top:3px">السائقون</div>
+                    </div>
+                    <div style="background:white;padding:14px;border-radius:10px;text-align:center;">
+                        <div style="font-size:28px;font-weight:900;color:var(--primary)" id="statPending">0</div>
+                        <div style="color:#666;font-size:13px;margin-top:3px">الطلبات</div>
+                    </div>
+                    <div style="background:white;padding:14px;border-radius:10px;text-align:center;">
+                        <div style="font-size:28px;font-weight:900;color:var(--accent)" id="statTrips">0</div>
+                        <div style="color:#666;font-size:13px;margin-top:3px">الرحلات</div>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">
-                    <span>🚕</span><span>دخول كسائق</span>
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Admin Modal -->
-    <div class="modal" id="adminModal">
-        <div class="modal-content" style="max-width: 800px;">
-            <div class="modal-header">
-                <h2 class="modal-title">لوحة الإدارة</h2>
-                <button class="close-btn" onclick="closeModal('adminModal')">×</button>
             </div>
-            <form id="adminForm">
-                <div class="form-group">
-                    <label class="form-label">كلمة سر المدير</label>
-                    <input type="password" class="form-input" id="adminPassword" placeholder="أدخل كلمة السر" required>
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;"><span>✓</span><span>دخول</span></button>
-            </form>
-            <div id="adminPanel" class="admin-dashboard" style="display: none;">
-                <div class="admin-section">
-                    <h3 class="admin-section-title">📊 إحصائيات</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                        <div style="background: white; padding: 15px; border-radius: 12px; text-align: center;">
-                            <div style="font-size: 32px; font-weight: 900; color: var(--success);" id="activeDriversCount">0</div>
-                            <div style="color: #666; margin-top: 5px;">السائقون النشطون</div>
-                        </div>
-                        <div style="background: white; padding: 15px; border-radius: 12px; text-align: center;">
-                            <div style="font-size: 32px; font-weight: 900; color: var(--primary);" id="pendingRequestsCount">0</div>
-                            <div style="color: #666; margin-top: 5px;">الطلبات المعلقة</div>
-                        </div>
-                        <div style="background: white; padding: 15px; border-radius: 12px; text-align: center;">
-                            <div style="font-size: 32px; font-weight: 900; color: var(--accent);" id="completedTripsCount">0</div>
-                            <div style="color: #666; margin-top: 5px;">الرحلات المكتملة</div>
-                        </div>
+            <!-- Add Request -->
+            <div class="admin-section">
+                <h3>➕ إضافة طلب</h3>
+                <form id="adminReqForm">
+                    <div class="form-group">
+                        <label class="form-label">موقع الانطلاق (اضغط على الخريطة)</label>
+                        <button type="button" onclick="reloadAdminMap()" class="btn btn-secondary" style="width:100%;justify-content:center;margin-bottom:8px;">🔄 إعادة تحميل الخريطة</button>
+                        <div id="adminMap" class="map-selector"></div>
+                        <div class="loc-display" id="adminLocDisplay" style="display:none;">📍 <span id="adminLocText"></span></div>
                     </div>
-                </div>
-                <div class="admin-section">
-                    <h3 class="admin-section-title">➕ إضافة طلب جديد</h3>
-                    <form id="adminAddRequestForm">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                         <div class="form-group">
-                            <label class="form-label">حدد موقع الانطلاق على الخريطة</label>
-                            <button type="button" class="btn btn-secondary" onclick="reloadAdminMap()" style="width: 100%; margin-bottom: 10px;"><span>🔄</span><span>إعادة تحميل الخريطة</span></button>
-                            <div id="adminPickupMap" class="map-selector"></div>
-                            <div class="location-display" id="adminLocationDisplay" style="display: none;"><span>📍</span><span id="adminLocationText"></span></div>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                            <div class="form-group">
-                                <label class="form-label">رقم الهاتف</label>
-                                <input type="tel" class="form-input" id="adminReqPhone" placeholder="05xxxxxxxx" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">الوجهة</label>
-                                <input type="text" class="form-input" id="adminReqDestination" placeholder="المستشفى" required>
-                            </div>
+                            <label class="form-label">رقم الهاتف</label>
+                            <input type="tel" class="form-input" id="adminPhone" placeholder="05xxxxxxxx" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">وصف موقع الانطلاق</label>
-                            <input type="text" class="form-input" id="adminReqLocation" placeholder="وصف الموقع" required>
+                            <label class="form-label">الوجهة</label>
+                            <input type="text" class="form-input" id="adminDest" placeholder="المستشفى" required>
                         </div>
-                        <button type="submit" class="btn btn-primary" style="width: 100%;"><span>➕</span><span>إضافة الطلب</span></button>
-                    </form>
-                </div>
-                <div class="admin-section">
-                    <h3 class="admin-section-title">📋 جميع الطلبات</h3>
-                    <div class="requests-list" id="adminRequestsList"><p style="text-align: center; color: #999;">لا توجد طلبات</p></div>
-                </div>
-                <div class="admin-section">
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-danger" id="logoutAllBtn" style="flex: 1;"><span>🚪</span><span>تسجيل خروج جميع السائقين</span></button>
-                        <button class="btn btn-secondary" id="refreshSystemBtn" style="flex: 1;"><span>🔄</span><span>تحديث</span></button>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">وصف الموقع</label>
+                        <input type="text" class="form-input" id="adminLocDesc" placeholder="مثال: بجانب الجامع" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:16px;">➕ إضافة الطلب</button>
+                </form>
+            </div>
+            <!-- Requests List -->
+            <div class="admin-section">
+                <h3>📋 جميع الطلبات</h3>
+                <div id="adminReqsList" style="max-height:350px;overflow-y:auto;">
+                    <p style="text-align:center;color:#999">لا توجد طلبات</p>
+                </div>
+            </div>
+            <!-- Actions -->
+            <div class="admin-section">
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-danger" id="logoutAllBtn" style="flex:1;justify-content:center;">🚪 خروج الجميع</button>
+                    <button class="btn btn-secondary" id="refreshBtn" style="flex:1;justify-content:center;background:var(--secondary);color:white;">🔄 تحديث</button>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Request Taxi Modal -->
-    <div class="modal" id="requestModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">طلب تكسي</h2>
-                <button class="close-btn" onclick="closeModal('requestModal')">×</button>
+<!-- REQUEST MODAL -->
+<div class="modal" id="requestModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h2 class="modal-title">طلب تكسي</h2>
+            <button class="close-x" onclick="closeModal('requestModal')">×</button>
+        </div>
+        <form id="requestForm">
+            <div class="form-group">
+                <label class="form-label">رقم هاتفك</label>
+                <div class="phone-row">
+                    <span class="phone-pre">+970</span>
+                    <input type="tel" class="phone-inp" id="custPhone" placeholder="599123456" required maxlength="10">
+                </div>
             </div>
-            <form id="requestForm">
-                <div class="form-group">
-                    <label class="form-label">حدد موقعك على الخريطة</label>
-                    <div id="pickupMap" class="map-selector"></div>
-                    <div class="location-display" id="locationDisplay" style="display: none;"><span>📍</span><span id="locationText"></span></div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">رقم هاتفك</label>
-                    <div class="phone-input-container" style="border: 2px solid var(--light); border-radius: 12px;">
-                        <span class="phone-prefix" style="font-size:16px; padding: 14px 12px;">+970</span>
-                        <input type="tel" class="phone-input" id="customerPhone" placeholder="599123456" required maxlength="10" pattern="[0-9]{9,10}" style="font-size:16px; padding:14px 15px;">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">وصف موقعك (اختياري)</label>
-                    <input type="text" class="form-input" id="locationDescription" placeholder="مثال: بجانب المسجد الكبير">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">إلى أين تريد الذهاب؟</label>
-                    <input type="text" class="form-input" id="destination" placeholder="مثال: المستشفى الحكومي" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">تفاصيل إضافية (اختياري)</label>
-                    <textarea class="form-input" id="requestDetails" placeholder="أي معلومات إضافية تساعد السائق..."></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;"><span>📍</span><span>إرسال الطلب</span></button>
-            </form>
-        </div>
+            <div class="form-group">
+                <label class="form-label">حدد موقعك على الخريطة</label>
+                <div id="pickupMap" class="map-selector"></div>
+                <div class="loc-display" id="locDisplay" style="display:none;">📍 <span id="locText"></span></div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">وصف موقعك (اختياري)</label>
+                <input type="text" class="form-input" id="locDesc" placeholder="بجانب المسجد الكبير">
+            </div>
+            <div class="form-group">
+                <label class="form-label">إلى أين؟</label>
+                <input type="text" class="form-input" id="destination" placeholder="المستشفى الحكومي" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">تفاصيل إضافية (اختياري)</label>
+                <textarea class="form-input" id="reqDetails" placeholder="أي معلومات تساعد السائق..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:15px;font-size:17px;">
+                📍 إرسال الطلب
+            </button>
+        </form>
     </div>
+</div>
 
-    <!-- Notification -->
-    <div class="notification" id="notification">
-        <div class="notification-header">
-            <div class="notification-icon">🔔</div>
-            <div class="notification-title" id="notificationTitle">إشعار</div>
-        </div>
-        <div class="notification-body" id="notificationBody"></div>
+<!-- NOTIFICATION -->
+<div class="notification" id="notification">
+    <div class="notif-head">
+        <div class="notif-icon">🔔</div>
+        <div class="notif-title" id="notifTitle">إشعار</div>
     </div>
+    <div class="notif-body" id="notifBody"></div>
+</div>
 
-    <!-- Loading Spinner -->
-    <div class="loading" id="loading"><div class="spinner"></div></div>
+<!-- LOADING -->
+<div class="loading" id="loading"><div class="spinner"></div></div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<!-- SCRIPTS -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ==================== FIREBASE ====================
+firebase.initializeApp({ databaseURL: "https://twsel-d2094-default-rtdb.firebaseio.com/" });
+const db = firebase.database();
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+// ==================== GLOBALS ====================
+let map, pickupMapObj, pickupMarkerObj, adminMapObj, adminMarkerObj;
+let adminUserLoc = null, userLoc = null;
+let requestMarkers = {}, expandingCircles = {}, circleIntervals = {};
+let driverMarker = null, gpsInterval = null, trackInterval = null, activeTrackId = null;
+let currentUser = { isDriver:false, driverId:null, phone:null, isBooked:false };
 
-    <!-- App JavaScript -->
-    <script src="app.js"></script>
+const ADMIN_PASS = 'admin2026';
+
+// ==================== INIT MAP ====================
+window.addEventListener('DOMContentLoaded', () => {
+    map = L.map('map').setView([32.3108, 35.0278], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution:'© OpenStreetMap', maxZoom:19
+    }).addTo(map);
+
+    restoreDriver();
+    listenRequests();
+    listenDriversList();
+    restoreActiveRequest();
+    initEvents();
+});
+
+const reqIcon = L.divIcon({
+    className:'', html:'<div style="font-size:34px;animation:bounce 1s infinite">📍</div>',
+    iconSize:[40,40], iconAnchor:[20,40]
+});
+
+// ==================== HELPERS ====================
+function notify(title, msg, ms=5000) {
+    document.getElementById('notifTitle').textContent = title;
+    document.getElementById('notifBody').textContent = msg;
+    const el = document.getElementById('notification');
+    el.classList.add('active');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('active'), ms);
+}
+function showLoad() { document.getElementById('loading').classList.add('active'); }
+function hideLoad() { document.getElementById('loading').classList.remove('active'); }
+
+window.closeModal = function(id) {
+    document.getElementById(id).classList.remove('active');
+    if (id==='requestModal') {
+        document.getElementById('requestForm').reset();
+        document.getElementById('locDisplay').style.display='none';
+        userLoc = null;
+        if (pickupMarkerObj && pickupMapObj) { pickupMapObj.removeLayer(pickupMarkerObj); pickupMarkerObj=null; }
+    }
+    if (id==='driverModal') document.getElementById('driverForm').reset();
+    if (id==='adminModal') {
+        document.getElementById('adminLoginForm').style.display='block';
+        document.getElementById('adminPanel').style.display='none';
+        document.getElementById('adminLoginForm').reset();
+    }
+};
+document.addEventListener('click', e => { if (e.target.classList.contains('modal')) closeModal(e.target.id); });
+
+function calcDist(lat1,lon1,lat2,lon2) {
+    const R=6371, dL=(lat2-lat1)*Math.PI/180, dO=(lon2-lon1)*Math.PI/180;
+    const a=Math.sin(dL/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dO/2)**2;
+    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// ==================== EVENTS ====================
+function initEvents() {
+    document.getElementById('waBtn').onclick = () => {
+        window.open('https://wa.me/970599123456?text=' + encodeURIComponent('مرحباً أود الاستفسار'), '_blank');
+    };
+    document.getElementById('togglePanel').onclick = () => document.getElementById('driversPanel').classList.toggle('active');
+    document.getElementById('closePanel').onclick = () => document.getElementById('driversPanel').classList.remove('active');
+    document.getElementById('adminBtn').onclick = () => document.getElementById('adminModal').classList.add('active');
+    document.getElementById('driverBtn').onclick = () => {
+        if (currentUser.isDriver) logoutDriver(); else document.getElementById('driverModal').classList.add('active');
+    };
+    document.getElementById('requestBtn').onclick = () => {
+        document.getElementById('requestModal').classList.add('active');
+        initPickupMap();
+    };
+    document.getElementById('mailBtn').onclick = () => {
+        const ms = Object.values(requestMarkers);
+        if (!ms.length) { notify('لا توجد طلبات','لا توجد طلبات في الانتظار'); return; }
+        map.fitBounds(L.latLngBounds(ms.map(m=>m.getLatLng())), {padding:[50,50]});
+    };
+
+    // Driver form
+    document.getElementById('driverForm').onsubmit = async e => {
+        e.preventDefault();
+        const raw = document.getElementById('driverPhone').value.trim();
+        if (!/^[0-9]{9,10}$/.test(raw)) { notify('خطأ','رقم الهاتف غير صحيح'); return; }
+        const phone = raw.startsWith('0') ? raw : '0'+raw;
+        showLoad();
+        try {
+            const driverId = 'driver_' + phone;
+            currentUser = { isDriver:true, driverId, phone, isBooked:false };
+            localStorage.setItem('currentDriver', JSON.stringify(currentUser));
+            await db.ref('drivers/'+driverId).set({ phone, online:true, lastSeen:Date.now(), joinedAt:new Date().toISOString() });
+            closeModal('driverModal');
+            updateDriverUI();
+            listenRequests();
+            startGPS();
+            notify('مرحباً ✅','تم دخولك كسائق');
+        } catch(err) { notify('خطأ','حدث خطأ'); }
+        finally { hideLoad(); }
+    };
+
+    // Admin form
+    document.getElementById('adminLoginForm').onsubmit = async e => {
+        e.preventDefault();
+        if (document.getElementById('adminPass').value !== ADMIN_PASS) { notify('خطأ','كلمة السر غير صحيحة'); return; }
+        document.getElementById('adminLoginForm').style.display='none';
+        document.getElementById('adminPanel').style.display='block';
+        loadAdminStats(); loadAdminRequests();
+        notify('مرحباً','تم الدخول للإدارة');
+    };
+
+    // Request form
+    document.getElementById('requestForm').onsubmit = async e => {
+        e.preventDefault();
+        if (!userLoc) { notify('خطأ','حدد موقعك على الخريطة'); return; }
+        const raw = document.getElementById('custPhone').value.trim();
+        if (!/^[0-9]{9,10}$/.test(raw)) { notify('خطأ','رقم الهاتف غير صحيح'); return; }
+        const phone = raw.startsWith('0') ? raw : '0'+raw;
+        const loc = {...userLoc};
+        const dest = document.getElementById('destination').value.trim();
+        const locDesc = document.getElementById('locDesc').value.trim();
+        const details = document.getElementById('reqDetails').value.trim();
+        showLoad();
+        try {
+            const rid = 'request_' + Date.now();
+            await db.ref('requests/'+rid).set({
+                id:rid, location:loc, locationDescription:locDesc||'',
+                destination:dest, phone, details, status:'pending',
+                timestamp:firebase.database.ServerValue.TIMESTAMP,
+                createdAt:new Date().toISOString(), notifiedNearby:false
+            });
+            closeModal('requestModal');
+            notify('تم ✅','تم إرسال طلبك! جاري البحث...');
+            startCircleSearch(rid, loc);
+            watchMyRequest(rid, phone);
+        } catch(err) { notify('خطأ','حدث خطأ'); }
+        finally { hideLoad(); }
+    };
+
+    // Admin req form
+    document.getElementById('adminReqForm').onsubmit = async e => {
+        e.preventDefault();
+        if (!adminUserLoc) { notify('خطأ','حدد الموقع على الخريطة'); return; }
+        showLoad();
+        try {
+            const rid = 'request_' + Date.now();
+            await db.ref('requests/'+rid).set({
+                id:rid, location:adminUserLoc,
+                locationDescription:document.getElementById('adminLocDesc').value.trim(),
+                destination:document.getElementById('adminDest').value.trim(),
+                phone:document.getElementById('adminPhone').value.trim(),
+                details:'طلب من المكتب', status:'pending',
+                timestamp:firebase.database.ServerValue.TIMESTAMP,
+                createdAt:new Date().toISOString(), addedByAdmin:true, notifiedNearby:false
+            });
+            document.getElementById('adminReqForm').reset();
+            document.getElementById('adminLocDisplay').style.display='none';
+            if (adminMarkerObj) { adminMapObj.removeLayer(adminMarkerObj); adminMarkerObj=null; }
+            adminUserLoc=null;
+            notify('تم','تم إضافة الطلب');
+            loadAdminStats();
+        } catch(err) { notify('خطأ','حدث خطأ'); }
+        finally { hideLoad(); }
+    };
+
+    document.getElementById('logoutAllBtn').onclick = async () => {
+        if (!confirm('تسجيل خروج جميع السائقين؟')) return;
+        showLoad();
+        try {
+            const snap = await db.ref('drivers').orderByChild('online').equalTo(true).once('value');
+            const drivers = snap.val()||{};
+            const upd={};
+            Object.keys(drivers).forEach(id=>{upd['drivers/'+id+'/online']=false; upd['drivers/'+id+'/lastSeen']=Date.now();});
+            await db.ref().update(upd);
+            notify('تم','تم تسجيل خروج '+Object.keys(drivers).length+' سائق');
+            loadAdminStats();
+        } catch(e){ notify('خطأ','حدث خطأ'); }
+        finally { hideLoad(); }
+    };
+    document.getElementById('refreshBtn').onclick = () => { loadAdminStats(); loadAdminRequests(); notify('تم','تم التحديث'); };
+}
+
+// ==================== DRIVER UI ====================
+function updateDriverUI() {
+    const btn = document.getElementById('driverBtn');
+    if (currentUser.isDriver) {
+        btn.innerHTML='🚪 خروج'; btn.className='btn btn-logout';
+        document.getElementById('mailBtn').style.display='flex';
+        document.getElementById('onlineDot').style.display='inline-block';
+    } else {
+        btn.innerHTML='👨‍💼 دخول'; btn.className='btn btn-secondary';
+        document.getElementById('mailBtn').style.display='none';
+        document.getElementById('onlineDot').style.display='none';
+    }
+}
+
+function restoreDriver() {
+    const s = localStorage.getItem('currentDriver');
+    if (!s) return;
+    try {
+        currentUser = JSON.parse(s);
+        if (currentUser.isDriver) {
+            updateDriverUI(); listenRequests();
+            db.ref('drivers/'+currentUser.driverId+'/online').once('value', snap => { if(!snap.val()) logoutDriver(); });
+        }
+    } catch(e) { localStorage.removeItem('currentDriver'); }
+}
+
+async function logoutDriver() {
+    if (!currentUser.isDriver) return;
+    showLoad();
+    try {
+        stopGPS();
+        await db.ref('drivers/'+currentUser.driverId).update({online:false, lastSeen:Date.now()});
+        localStorage.removeItem('currentDriver');
+        currentUser = {isDriver:false, driverId:null, phone:null, isBooked:false};
+        updateDriverUI();
+        notify('تم','تم تسجيل الخروج');
+        setTimeout(()=>location.reload(), 800);
+    } catch(e){ notify('خطأ','حدث خطأ'); }
+    finally { hideLoad(); }
+}
+
+// ==================== GPS ====================
+function startGPS() {
+    if (!currentUser.isDriver || !navigator.geolocation) return;
+    const opt = {enableHighAccuracy:true, timeout:30000, maximumAge:0};
+    const update = () => navigator.geolocation.getCurrentPosition(pos => {
+        if (currentUser.driverId) db.ref('drivers/'+currentUser.driverId+'/location').set({
+            lat:pos.coords.latitude, lng:pos.coords.longitude, accuracy:pos.coords.accuracy, timestamp:Date.now()
+        });
+    }, ()=>{}, opt);
+    navigator.geolocation.getCurrentPosition(()=>{
+        notify('GPS','تم تفعيل تتبع موقعك 📍',3000);
+        update();
+        gpsInterval = setInterval(()=>{ if(currentUser.isDriver) update(); else { clearInterval(gpsInterval); gpsInterval=null; } }, 6000);
+    }, ()=>notify('تنبيه','اسمح بالوصول للموقع',6000), opt);
+}
+function stopGPS() {
+    if (gpsInterval) { clearInterval(gpsInterval); gpsInterval=null; }
+    if (currentUser.driverId) db.ref('drivers/'+currentUser.driverId+'/location').remove();
+}
+
+// ==================== TRACK DRIVER ====================
+function trackDriver(reqId, driverId) {
+    activeTrackId = reqId;
+    const upd = () => db.ref('drivers/'+driverId+'/location').once('value', snap=>{
+        const loc = snap.val();
+        if (!loc || activeTrackId!==reqId) return;
+        if (driverMarker) driverMarker.setLatLng([loc.lat, loc.lng]);
+        else {
+            driverMarker = L.marker([loc.lat, loc.lng], {icon:L.divIcon({className:'',html:'<div style="font-size:46px;animation:pulse 2s infinite">🚕</div>',iconSize:[52,52],iconAnchor:[26,26]})})
+                .addTo(map).bindPopup('🚕 السائق في الطريق إليك');
+            driverMarker.openPopup();
+        }
+        if (userLoc) map.fitBounds(L.latLngBounds([[userLoc.lat,userLoc.lng],[loc.lat,loc.lng]]),{padding:[80,80]});
+        else map.setView([loc.lat,loc.lng],15);
+    });
+    upd();
+    trackInterval = setInterval(()=>{ if(activeTrackId===reqId) upd(); else {clearInterval(trackInterval); trackInterval=null;} }, 6000);
+}
+function stopTrackDriver() {
+    activeTrackId=null;
+    if(trackInterval){clearInterval(trackInterval);trackInterval=null;}
+    if(driverMarker){map.removeLayer(driverMarker);driverMarker=null;}
+}
+
+// ==================== MAPS IN MODALS ====================
+function initPickupMap() {
+    setTimeout(()=>{
+        if (pickupMapObj) { pickupMapObj.invalidateSize(); return; }
+        pickupMapObj = L.map('pickupMap').setView([32.3108,35.0278],13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(pickupMapObj);
+        pickupMapObj.on('click', e=>{
+            const {lat,lng}=e.latlng;
+            if(pickupMarkerObj) pickupMarkerObj.setLatLng([lat,lng]);
+            else {
+                pickupMarkerObj=L.marker([lat,lng],{draggable:true}).addTo(pickupMapObj);
+                pickupMarkerObj.on('dragend',ev=>{
+                    const p=ev.target.getLatLng(); userLoc={lat:p.lat,lng:p.lng};
+                    showLoc(p.lat,p.lng,'locDisplay','locText');
+                });
+            }
+            userLoc={lat,lng}; showLoc(lat,lng,'locDisplay','locText');
+        });
+    }, 350);
+}
+function initAdminMap() {
+    if (adminMapObj) { adminMapObj.invalidateSize(); return; }
+    adminMapObj = L.map('adminMap').setView([32.3108,35.0278],13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(adminMapObj);
+    adminMapObj.on('click', e=>{
+        const{lat,lng}=e.latlng;
+        if(adminMarkerObj) adminMarkerObj.setLatLng([lat,lng]);
+        else {
+            adminMarkerObj=L.marker([lat,lng],{draggable:true}).addTo(adminMapObj);
+            adminMarkerObj.on('dragend',ev=>{
+                const p=ev.target.getLatLng(); adminUserLoc={lat:p.lat,lng:p.lng};
+                showLoc(p.lat,p.lng,'adminLocDisplay','adminLocText');
+            });
+        }
+        adminUserLoc={lat,lng}; showLoc(lat,lng,'adminLocDisplay','adminLocText');
+    });
+}
+window.reloadAdminMap = function() {
+    if(adminMapObj){adminMapObj.remove();adminMapObj=null;adminMarkerObj=null;}
+    setTimeout(()=>{ initAdminMap(); setTimeout(()=>{if(adminMapObj)adminMapObj.invalidateSize();},300); },100);
+};
+function showLoc(lat,lng,dispId,txtId) {
+    document.getElementById(dispId).style.display='flex';
+    document.getElementById(txtId).textContent=lat.toFixed(6)+', '+lng.toFixed(6);
+}
+
+// ==================== LISTEN REQUESTS ====================
+function listenRequests() {
+    db.ref('requests').orderByChild('status').equalTo('pending').on('value', snap=>{
+        const reqs = snap.val()||{};
+        Object.keys(requestMarkers).forEach(id=>{ if(!reqs[id]){map.removeLayer(requestMarkers[id]);delete requestMarkers[id];} });
+        let cnt=0;
+        Object.entries(reqs).forEach(([rid,req])=>{
+            if(req.status!=='pending') return;
+            cnt++;
+            if(!requestMarkers[rid]) {
+                const mk = L.marker([req.location.lat,req.location.lng],{icon:reqIcon}).addTo(map);
+                mk.on('click',()=>showReqPopup(req,mk));
+                requestMarkers[rid]=mk;
+                if(currentUser.isDriver) {
+                    notify('🚨 طلب جديد!',req.phone+' - '+req.destination,8000);
+                    try{new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGGmz6eeXSwgNUKXi8LZkHAU5kdXzzHoqBSJ2xe/ekEEKFF+z6eirVhMJRp/g8b5uIQUrfs7y24o2Bw==').play().catch(()=>{});}catch(e){}
+                }
+            }
+        });
+        const badge=document.getElementById('reqCount');
+        if(cnt>0&&currentUser.isDriver){badge.textContent=cnt;badge.style.display='inline-block';}
+        else badge.style.display='none';
+    });
+}
+
+function listenDriversList() {
+    db.ref('drivers').orderByChild('online').equalTo(true).on('value', snap=>{
+        const drivers=snap.val()||{};
+        const fiveMin=Date.now()-5*60*1000;
+        const online=Object.entries(drivers).filter(([id,d])=>d.online&&d.lastSeen>=fiveMin);
+        const list=document.getElementById('driversList');
+        if(!online.length){list.innerHTML='<p style="text-align:center;color:#999;padding:20px">لا يوجد سائقون الآن</p>';return;}
+        list.innerHTML=online.map(([id,d])=>{
+            const me=id===currentUser.driverId;
+            return `<div class="driver-card" style="${me?'background:#e3f2fd;border:2px solid var(--primary)':''}">
+                <div class="driver-avatar">🚕</div>
+                <div>
+                    <div class="driver-name">${d.phone} ${me?'<span style="background:var(--primary);color:white;padding:2px 7px;border-radius:8px;font-size:10px">أنت</span>':''}</div>
+                    <div class="driver-status"><span style="width:7px;height:7px;background:var(--success);border-radius:50%;display:inline-block"></span> متاح</div>
+                    ${d.averageRating?`<div style="color:var(--accent);font-size:12px">⭐ ${d.averageRating}</div>`:''}
+                </div>
+            </div>`;
+        }).join('');
+    });
+}
+
+// ==================== WATCH MY REQUEST ====================
+function watchMyRequest(rid, phone) {
+    localStorage.setItem('activeRequestId', rid);
+    localStorage.setItem('activeRequestPhone', phone);
+    db.ref('requests/'+rid).on('value', snap=>{
+        const req=snap.val();
+        if(!req){localStorage.removeItem('activeRequestId');localStorage.removeItem('activeRequestPhone');return;}
+        if(req.status==='pending') showCancelBtn(rid);
+        if(req.status==='accepted'&&req.driverPhone) {
+            notify('🎉 تم قبول طلبك!','السائق '+req.driverPhone+' في الطريق',10000);
+            trackDriver(rid, req.acceptedBy);
+            showCancelBtn(rid);
+        }
+        if(req.status==='arrived'){notify('📍 السائق وصل!','السائق في موقعك الآن',8000);stopTrackDriver();}
+        if(req.status==='completed'&&!req.rated){showRatingModal(rid,req.driverPhone,req.acceptedBy);stopTrackDriver();db.ref('requests/'+rid).off();localStorage.removeItem('activeRequestId');localStorage.removeItem('activeRequestPhone');}
+        if(req.status==='cancelled_by_customer'){notify('تم الإلغاء','تم إلغاء طلبك',5000);stopTrackDriver();db.ref('requests/'+rid).off();localStorage.removeItem('activeRequestId');localStorage.removeItem('activeRequestPhone');const b=document.getElementById('cancelBtn');if(b)b.remove();}
+        if(req.messages&&req.messages.length){const last=req.messages[req.messages.length-1];if(last.from==='driver')notify('رسالة من السائق',last.text,7000);}
+    });
+}
+
+function restoreActiveRequest() {
+    const rid=localStorage.getItem('activeRequestId'), phone=localStorage.getItem('activeRequestPhone');
+    if(rid&&phone) setTimeout(()=>watchMyRequest(rid,phone),1500);
+}
+
+function showCancelBtn(rid) {
+    if(document.getElementById('cancelBtn')) return;
+    const b=document.createElement('button');
+    b.id='cancelBtn'; b.className='btn btn-danger';
+    b.style.cssText='position:fixed;bottom:20px;right:15px;z-index:2000;animation:pulse 2s infinite;padding:14px 22px;font-size:16px;';
+    b.innerHTML='❌ إلغاء الطلب';
+    b.onclick=()=>{if(confirm('إلغاء الطلب؟'))cancelRequest(rid);};
+    document.body.appendChild(b);
+}
+
+async function cancelRequest(rid) {
+    showLoad();
+    try {
+        const snap=await db.ref('requests/'+rid).once('value');
+        const req=snap.val();
+        if(!req){notify('خطأ','الطلب غير موجود');hideLoad();return;}
+        await db.ref('requests/'+rid).update({status:'cancelled_by_customer',cancelledAt:Date.now()});
+        if(req.acceptedBy) stopTrackDriver();
+        const b=document.getElementById('cancelBtn'); if(b)b.remove();
+        notify('تم','تم إلغاء الطلب');
+    } catch(e){notify('خطأ','حدث خطأ');}
+    finally{hideLoad();}
+}
+
+// ==================== REQUEST POPUP ====================
+function showReqPopup(req, marker) {
+    const date = new Date(req.createdAt).toLocaleString('ar-EG');
+    const statusMap = {pending:'في الانتظار',accepted:'تم القبول',arrived:'وصل',completed:'مكتملة'};
+    const isMe = currentUser.isDriver;
+    const msgs = req.messages&&req.messages.length ? req.messages.slice(-3).map(m=>`<div style="background:white;padding:8px;border-radius:6px;border-right:3px solid var(--primary);margin-bottom:6px"><div style="font-size:13px">${m.text}</div><div style="font-size:10px;color:#999;margin-top:3px">${new Date(m.timestamp).toLocaleTimeString('ar')}</div></div>`).join('') : '';
+
+    const html=`<div class="req-popup">
+        <h3>📍 تفاصيل الطلب</h3>
+        ${isMe&&req.locationDescription?`<div class="req-info"><div class="req-label">الموقع</div><div class="req-value">${req.locationDescription}</div></div>`:''}
+        <div class="req-info"><div class="req-label">الوجهة</div><div class="req-value">${req.destination}</div></div>
+        ${isMe?`<div class="req-info"><div class="req-label">الهاتف</div><div class="req-value"><a href="tel:${req.phone}" style="color:var(--primary);font-weight:bold">${req.phone}</a></div></div>`:''}
+        ${isMe&&req.details?`<div class="req-info"><div class="req-label">تفاصيل</div><div class="req-value">${req.details}</div></div>`:''}
+        <div class="req-info"><div class="req-label">الوقت</div><div class="req-value">${date}</div></div>
+        <span class="status-badge status-${req.status}">${statusMap[req.status]||req.status}</span>
+        ${msgs?`<div style="max-height:160px;overflow-y:auto;margin-top:10px;background:var(--light);padding:8px;border-radius:8px">${msgs}</div>`:''}
+        ${isMe&&req.status==='pending'?`<div class="req-actions"><button class="btn btn-accept" onclick="acceptReq('${req.id}','${req.phone}')">✓ قبول</button><button class="btn btn-reject" onclick="removeReq('${req.id}')">× إزالة</button></div>`:''}
+        ${isMe&&req.status==='accepted'&&req.acceptedBy===currentUser.driverId?`
+        <div class="quick-msgs">
+            <button class="qmsg" onclick="quickMsg('${req.id}','أنا في الطريق')">📍 في الطريق</button>
+            <button class="qmsg" onclick="quickMsg('${req.id}','سأصل خلال 5 دقائق')">⏱️ 5 دقائق</button>
+            <button class="qmsg" onclick="quickMsg('${req.id}','أنا بالانتظار')">⏸️ انتظار</button>
+        </div>
+        <div class="req-actions"><button class="btn btn-arrived" onclick="arrivedReq('${req.id}')">📍 وصلت</button></div>`:''}
+        ${isMe&&req.status==='arrived'&&req.acceptedBy===currentUser.driverId?`<div class="req-actions"><button class="btn btn-complete" onclick="doneReq('${req.id}')">✓ إنهاء الرحلة</button></div>`:''}
+    </div>`;
+
+    L.popup({minWidth:270}).setLatLng(marker.getLatLng()).setContent(html).openOn(map);
+}
+
+window.acceptReq = async function(rid, phone) {
+    if(!currentUser.isDriver){notify('خطأ','يجب الدخول كسائق');return;}
+    if(currentUser.isBooked){notify('تنبيه','أنت محجوز حالياً');return;}
+    showLoad();
+    try {
+        const res = await db.ref('requests/'+rid).transaction(cur=>{
+            if(!cur||cur.status!=='pending') return;
+            cur.status='accepted'; cur.acceptedBy=currentUser.driverId;
+            cur.driverPhone=currentUser.phone; cur.acceptedAt=Date.now();
+            return cur;
+        });
+        if(!res.committed){notify('تنبيه','تم قبوله من سائق آخر');hideLoad();return;}
+        currentUser.isBooked=true;
+        await db.ref('drivers/'+currentUser.driverId).update({isBooked:true,bookedAt:Date.now()});
+        const rd=res.snapshot.val();
+        await db.ref('trips/trip_'+Date.now()).set({requestId:rid,driverId:currentUser.driverId,driverPhone:currentUser.phone,customerPhone:phone,destination:rd.destination,status:'on_the_way',createdAt:Date.now()});
+        map.closePopup();
+        notify('تم ✅','تم قبول الطلب - '+phone);
+        showUnbookBtn();
+        setTimeout(()=>{if(confirm('اتصال بالعميل؟'))location.href='tel:'+phone;},900);
+    } catch(e){notify('خطأ','حدث خطأ');}
+    finally{hideLoad();}
+};
+
+function showUnbookBtn() {
+    const old=document.getElementById('unbookBtn'); if(old)old.remove();
+    const b=document.createElement('button');
+    b.id='unbookBtn'; b.className='btn btn-danger';
+    b.style.cssText='position:fixed;bottom:30px;left:15px;z-index:2500;padding:15px 25px;font-size:16px;animation:pulse 2s infinite;box-shadow:var(--shadow-lg)';
+    b.innerHTML='🔓 إشالة الحجز';
+    b.onclick=async()=>{
+        if(!confirm('إشالة الحجز؟'))return;
+        showLoad();
+        try{currentUser.isBooked=false;await db.ref('drivers/'+currentUser.driverId).update({isBooked:false});notify('تم','✅ تم إشالة الحجز');b.remove();}
+        catch(e){notify('خطأ','حدث خطأ');}
+        finally{hideLoad();}
+    };
+    document.body.appendChild(b);
+}
+
+window.removeReq = async function(rid) {
+    if(!currentUser.isDriver||!confirm('حذف الطلب؟'))return;
+    showLoad();
+    try{await db.ref('requests/'+rid).remove();map.closePopup();notify('تم','تم الحذف');}
+    catch(e){notify('خطأ','حدث خطأ');}
+    finally{hideLoad();}
+};
+
+window.quickMsg = async function(rid, msg) {
+    try{
+        const ref=db.ref('requests/'+rid+'/messages');
+        const snap=await ref.once('value');
+        const msgs=snap.val()||[];
+        msgs.push({text:msg,timestamp:Date.now(),from:'driver'});
+        await ref.set(msgs);
+        notify('تم','تم إرسال الرسالة'); map.closePopup();
+    }catch(e){notify('خطأ','حدث خطأ');}
+};
+
+window.arrivedReq = async function(rid) {
+    showLoad();
+    try{await db.ref('requests/'+rid).update({status:'arrived',arrivedAt:firebase.database.ServerValue.TIMESTAMP});map.closePopup();notify('تم','تم تأكيد وصولك');}
+    catch(e){notify('خطأ','حدث خطأ');}
+    finally{hideLoad();}
+};
+
+window.doneReq = async function(rid) {
+    if(!confirm('إنهاء الرحلة؟'))return;
+    showLoad();
+    try{
+        await db.ref('requests/'+rid).update({status:'completed',completedAt:firebase.database.ServerValue.TIMESTAMP});
+        if(requestMarkers[rid]){map.removeLayer(requestMarkers[rid]);delete requestMarkers[rid];}
+        map.closePopup(); notify('تم','تم إنهاء الرحلة 🎉');
+    }catch(e){notify('خطأ','حدث خطأ');}
+    finally{hideLoad();}
+};
+
+// ==================== CIRCLE SEARCH ====================
+function startCircleSearch(rid, loc) {
+    let radius=100;
+    const circle=L.circle([loc.lat,loc.lng],{color:'#FF6B35',fillColor:'#FF6B35',fillOpacity:0.12,radius,weight:2}).addTo(map);
+    expandingCircles[rid]=circle;
+
+    async function search() {
+        const snap=await db.ref('drivers').orderByChild('online').equalTo(true).once('value');
+        const drivers=snap.val()||{};
+        let best=null, minD=Infinity;
+        for(const [did,d] of Object.entries(drivers)){
+            if(d.isBooked||!d.location)continue;
+            const dist=calcDist(loc.lat,loc.lng,d.location.lat,d.location.lng)*1000;
+            if(dist<=radius&&dist<minD){best={did,d,dist};minD=dist;}
+        }
+        if(best){
+            clearInterval(circleIntervals[rid]); delete circleIntervals[rid];
+            await db.ref('requests/'+rid).update({targetDriver:best.did,sentToDriverAt:Date.now()});
+            setTimeout(()=>{if(expandingCircles[rid]){map.removeLayer(expandingCircles[rid]);delete expandingCircles[rid];}},1000);
+            return true;
+        }
+        return false;
+    }
+
+    circleIntervals[rid]=setInterval(async()=>{
+        radius+=500; circle.setRadius(radius);
+        const found=await search();
+        if(found||radius>=50000){
+            clearInterval(circleIntervals[rid]);delete circleIntervals[rid];
+            if(!found){notify('تنبيه','لم يتم إيجاد سائق قريب');if(expandingCircles[rid]){map.removeLayer(expandingCircles[rid]);delete expandingCircles[rid];}}
+        }
+    },1000);
+    search();
+}
+
+// ==================== ADMIN STATS ====================
+async function loadAdminStats() {
+    const d=await db.ref('drivers').orderByChild('online').equalTo(true).once('value');
+    document.getElementById('statDrivers').textContent=d.numChildren();
+    const p=await db.ref('requests').orderByChild('status').equalTo('pending').once('value');
+    document.getElementById('statPending').textContent=p.numChildren();
+    const c=await db.ref('trips').orderByChild('status').equalTo('completed').once('value');
+    document.getElementById('statTrips').textContent=c.numChildren();
+    setTimeout(()=>{initAdminMap();setTimeout(()=>{if(adminMapObj)adminMapObj.invalidateSize();},200);},800);
+}
+
+function loadAdminRequests() {
+    db.ref('requests').on('value', snap=>{
+        const reqs=snap.val()||{};
+        const el=document.getElementById('adminReqsList');
+        if(!Object.keys(reqs).length){el.innerHTML='<p style="text-align:center;color:#999">لا توجد طلبات</p>';return;}
+        el.innerHTML=Object.entries(reqs).map(([id,r])=>`
+            <div class="req-card">
+                <div class="req-card-head"><strong>${r.phone}</strong><span class="status-badge status-${r.status}">${r.status}</span></div>
+                <div><strong>الوجهة:</strong> ${r.destination}</div>
+                <div style="font-size:12px;color:#888;margin-top:4px">${new Date(r.createdAt).toLocaleString('ar')}</div>
+            </div>`).join('');
+    });
+}
+
+// ==================== RATING ====================
+function showRatingModal(rid, dPhone, dId) {
+    const m=document.createElement('div');
+    m.className='modal active';
+    m.innerHTML=`<div class="modal-box"><div class="modal-head"><h2 class="modal-title">تقييم الرحلة</h2><button class="close-x" onclick="this.closest('.modal').remove()">×</button></div>
+    <div class="rating-box">
+        <p style="text-align:center;font-size:15px;margin-bottom:4px"><strong>تقييم السائق ${dPhone||''}</strong></p>
+        <div class="stars" id="dStars">${[1,2,3,4,5].map(i=>`<span class="star" data-r="${i}">⭐</span>`).join('')}</div>
+        <p style="text-align:center;font-size:15px;margin:10px 0 4px"><strong>تقييم التطبيق</strong></p>
+        <div class="stars" id="sStars">${[1,2,3,4,5].map(i=>`<span class="star" data-r="${i}">⭐</span>`).join('')}</div>
+        <textarea style="width:100%;margin-top:10px;padding:10px;border:2px solid var(--light);border-radius:8px;font-family:Tajawal;min-height:70px;resize:vertical" id="rComment" placeholder="تعليق (اختياري)..."></textarea>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:12px;padding:14px" onclick="submitRating('${rid}','${dId}')">إرسال التقييم</button>
+        <button class="btn btn-secondary" style="width:100%;justify-content:center;margin-top:8px;padding:12px" onclick="this.closest('.modal').remove()">تخطي</button>
+    </div></div>`;
+    document.body.appendChild(m);
+    let dr=0,sr=0;
+    m.querySelectorAll('#dStars .star').forEach(s=>s.onclick=function(){dr=+this.dataset.r;m.querySelectorAll('#dStars .star').forEach((x,i)=>x.classList.toggle('on',i<dr));});
+    m.querySelectorAll('#sStars .star').forEach(s=>s.onclick=function(){sr=+this.dataset.r;m.querySelectorAll('#sStars .star').forEach((x,i)=>x.classList.toggle('on',i<sr));});
+    window._dr=()=>dr; window._sr=()=>sr;
+}
+
+window.submitRating = async function(rid, dId) {
+    const dr=window._dr?window._dr():0, sr=window._sr?window._sr():0;
+    if(!dr||!sr){notify('تنبيه','اختر التقييمات');return;}
+    const comment=document.getElementById('rComment')?.value||'';
+    showLoad();
+    try{
+        await db.ref('ratings/r_'+Date.now()).set({requestId:rid,driverId:dId,driverRating:dr,siteRating:sr,comment,timestamp:firebase.database.ServerValue.TIMESTAMP});
+        await db.ref('requests/'+rid).update({rated:true,driverRating:dr,siteRating:sr});
+        const rs=await db.ref('ratings').orderByChild('driverId').equalTo(dId).once('value');
+        const rv=rs.val();
+        if(rv){const vs=Object.values(rv).map(r=>r.driverRating);await db.ref('drivers/'+dId).update({averageRating:+(vs.reduce((a,b)=>a+b,0)/vs.length).toFixed(1),totalRatings:vs.length});}
+        document.querySelector('.modal.active')?.remove();
+        notify('شكراً','تم إرسال تقييمك!');
+    }catch(e){notify('خطأ','حدث خطأ');}
+    finally{hideLoad();}
+};
+
+window.addEventListener('beforeunload',()=>{
+    if(currentUser.isDriver) db.ref('drivers/'+currentUser.driverId).update({lastSeen:firebase.database.ServerValue.TIMESTAMP});
+});
+</script>
 </body>
 </html>
