@@ -83,14 +83,6 @@
         .btn-mail { top:170px; left:15px; background:var(--secondary); color:white; animation:pulse 2s infinite; }
         .btn-panel { top:170px; right:15px; background:var(--gradient-primary); color:white; }
 
-        .whatsapp-btn {
-            position:fixed; bottom:20px; left:15px; z-index:1000;
-            width:58px; height:58px; background:#25D366; border-radius:50%;
-            display:flex; align-items:center; justify-content:center;
-            border:none; font-size:30px; cursor:pointer; box-shadow:var(--shadow-lg);
-            animation:pulse 2s infinite;
-        }
-
         /* DRIVERS PANEL */
         .drivers-panel {
             position:fixed; top:160px; right:10px;
@@ -307,7 +299,28 @@
 <button class="btn-float btn-panel" id="togglePanel">👥 السائقون</button>
 
 <!-- WHATSAPP -->
-<button class="whatsapp-btn" id="waBtn">💬</button>
+<a id="waBtn" href="https://wa.me/970599123456?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%B7%D9%84%D8%A8%20%D8%AA%D9%83%D8%B3%D9%8A" target="_blank" style="
+    position:fixed; bottom:22px; left:16px; z-index:1000;
+    display:flex; align-items:center; gap:10px;
+    background:#25D366; color:white;
+    padding:12px 18px 12px 14px;
+    border-radius:50px;
+    box-shadow:0 4px 20px rgba(37,211,102,0.5);
+    text-decoration:none;
+    font-family:'Cairo',sans-serif; font-weight:700; font-size:14px;
+    animation:waPulse 2.5s infinite;
+">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="26" height="26" fill="white">
+        <path d="M16 0C7.163 0 0 7.163 0 16c0 2.833.738 5.493 2.031 7.806L0 32l8.418-2.007A15.93 15.93 0 0016 32c8.837 0 16-7.163 16-16S24.837 0 16 0zm0 29.333a13.267 13.267 0 01-6.763-1.847l-.485-.288-5.002 1.193 1.215-4.87-.317-.5A13.267 13.267 0 012.667 16C2.667 8.636 8.636 2.667 16 2.667S29.333 8.636 29.333 16 23.364 29.333 16 29.333zm7.27-9.942c-.398-.199-2.354-1.162-2.719-1.294-.365-.133-.631-.199-.897.199-.265.398-1.029 1.294-1.261 1.56-.232.265-.465.299-.863.1-.398-.199-1.681-.62-3.202-1.977-1.183-1.057-1.982-2.363-2.214-2.761-.232-.398-.025-.613.174-.811.179-.178.398-.465.597-.697.199-.232.265-.398.398-.664.133-.265.066-.498-.033-.697-.1-.199-.897-2.162-1.229-2.96-.324-.776-.653-.671-.897-.683l-.764-.013c-.265 0-.697.1-.1063.498-.365.398-1.395 1.362-1.395 3.325 0 1.963 1.428 3.86 1.627 4.126.199.265 2.811 4.292 6.811 6.019.952.411 1.694.657 2.273.84.955.304 1.824.261 2.511.158.766-.114 2.354-.962 2.686-1.891.332-.929.332-1.725.232-1.891-.099-.166-.365-.265-.763-.464z"/>
+    </svg>
+    واتساب
+</a>
+<style>
+@keyframes waPulse {
+    0%,100% { box-shadow:0 4px 20px rgba(37,211,102,0.5); transform:scale(1); }
+    50% { box-shadow:0 4px 28px rgba(37,211,102,0.8); transform:scale(1.04); }
+}
+</style>
 
 <!-- DRIVERS PANEL -->
 <div class="drivers-panel" id="driversPanel">
@@ -518,8 +531,8 @@ const TULKAREM_CENTER = [32.3108, 35.0278];
 // ==================== GLOBALS ====================
 let map, pickupMapObj, pickupMarkerObj, adminMapObj, adminMarkerObj;
 let adminUserLoc = null, userLoc = null;
-let requestMarkers = {}, expandingCircles = {}, circleIntervals = {};
-let driverMarker = null, gpsInterval = null, trackInterval = null, activeTrackId = null;
+let requestMarkers = {};
+let driverMarker = null, gpsInterval = null, gpsWatchId = null, trackInterval = null, activeTrackId = null;
 let currentUser = { isDriver:false, driverId:null, phone:null, name:null, isBooked:false };
 
 // ==================== INIT ====================
@@ -604,9 +617,6 @@ function normalizePhone(raw) {
 
 // ==================== EVENTS ====================
 function initEvents() {
-    document.getElementById('waBtn').onclick = () => {
-        window.open('https://wa.me/970599123456?text=' + encodeURIComponent('مرحباً أود الاستفسار'), '_blank');
-    };
     document.getElementById('togglePanel').onclick = () => document.getElementById('driversPanel').classList.toggle('active');
     document.getElementById('closePanel').onclick = () => document.getElementById('driversPanel').classList.remove('active');
     
@@ -730,8 +740,7 @@ function initEvents() {
             };
             await db.ref('requests/' + rid).set(reqData);
             closeModal('requestModal');
-            notify('تم ✅','تم إرسال طلبك! جاري البحث عن سائق...');
-            startCircleSearch(rid, loc);
+            notify('تم ✅', 'تم إرسال طلبك! جاري البحث عن سائق...');
             watchMyRequest(rid, phone);
         } catch(err) {
             console.error('Request error:', err);
@@ -885,8 +894,6 @@ async function logoutDriver() {
 }
 
 // ==================== GPS ====================
-let gpsWatchId = null; // معرف watchPosition منفصل
-
 function startGPS() {
     if (!currentUser.isDriver) return;
     if (!navigator.geolocation) {
@@ -1262,9 +1269,6 @@ function watchMyRequest(rid, phone) {
         if (req.status === 'cancelled_by_customer' || req.status === 'stopped_by_customer') {
             notify('تم','تم إيقاف/إلغاء طلبك',5000);
             stopTrackDriver();
-            // إزالة الدائرة
-            if (circleIntervals[rid]) { clearInterval(circleIntervals[rid]); delete circleIntervals[rid]; }
-            if (expandingCircles[rid]) { map.removeLayer(expandingCircles[rid]); delete expandingCircles[rid]; }
             db.ref('requests/' + rid).off();
             localStorage.removeItem('activeRequestId');
             localStorage.removeItem('activeRequestPhone');
@@ -1325,8 +1329,6 @@ async function stopRequest(rid) {
     if (!confirm('إيقاف الطلب نهائياً؟\nلن يتمكن أي سائق من رؤيته بعد ذلك.')) return;
     showLoad();
     try {
-        if (circleIntervals[rid]) { clearInterval(circleIntervals[rid]); delete circleIntervals[rid]; }
-        if (expandingCircles[rid]) { map.removeLayer(expandingCircles[rid]); delete expandingCircles[rid]; }
         await db.ref('requests/' + rid).update({ status:'stopped_by_customer', stoppedAt: Date.now() });
         removeCustomerControls();
         notify('تم ⏹️','تم إيقاف الطلب بنجاح');
@@ -1338,8 +1340,6 @@ async function cancelRequest(rid) {
     if (!confirm('إلغاء الطلب؟')) return;
     showLoad();
     try {
-        if (circleIntervals[rid]) { clearInterval(circleIntervals[rid]); delete circleIntervals[rid]; }
-        if (expandingCircles[rid]) { map.removeLayer(expandingCircles[rid]); delete expandingCircles[rid]; }
         await db.ref('requests/' + rid).update({ status:'cancelled_by_customer', cancelledAt: Date.now() });
         removeCustomerControls();
         notify('تم','تم إلغاء الطلب ✅');
@@ -1474,94 +1474,6 @@ window.doneReq = async function(rid) {
     } catch(e) { notify('خطأ','حدث خطأ'); }
     finally { hideLoad(); }
 };
-
-// ==================== CIRCLE SEARCH ====================
-// الدائرة على موقع الطلب - تكبر كل 4 ثوان
-// أول سائق داخل الدائرة → يحصل على الطلب حصرياً
-function startCircleSearch(rid, reqLoc) {
-    let radius = 400;
-
-    const circle = L.circle([reqLoc.lat, reqLoc.lng], {
-        color: '#FF6B35', fillColor: '#FF6B35',
-        fillOpacity: 0.07, radius, weight: 2, dashArray: '8,5'
-    }).addTo(map);
-    expandingCircles[rid] = circle;
-    map.setView([reqLoc.lat, reqLoc.lng], 14);
-
-    async function tryAssignDriver() {
-        // هل الطلب لا يزال pending؟
-        const statusSnap = await db.ref('requests/' + rid + '/status').once('value');
-        if (statusSnap.val() !== 'pending') {
-            stopCircle();
-            return;
-        }
-
-        // اجلب السائقين المتصلين
-        const snap = await db.ref('drivers').orderByChild('online').equalTo(true).once('value');
-        const driversData = snap.val() || {};
-
-        let nearest = null;
-        let nearestDist = Infinity;
-
-        for (const [did, d] of Object.entries(driversData)) {
-            if (d.isBooked || !d.location) continue;
-            const dist = calcDist(reqLoc.lat, reqLoc.lng, d.location.lat, d.location.lng) * 1000;
-            if (dist <= radius && dist < nearestDist) {
-                nearest = { did, data: d, dist };
-                nearestDist = dist;
-            }
-        }
-
-        if (!nearest) return; // لا سائق قريب، الدائرة تكبر في الدورة التالية
-
-        // سائق وُجد - خصص الطلب له حصرياً بـ transaction
-        try {
-            const txResult = await db.ref('requests/' + rid).transaction(cur => {
-                if (!cur || cur.status !== 'pending' || cur.assignedDriver) return undefined; // لا تعدل
-                cur.assignedDriver = nearest.did;
-                cur.assignedAt = Date.now();
-                return cur;
-            });
-
-            if (!txResult.committed) return; // سبق تخصيصه
-
-            stopCircle();
-
-            // أرسل إشعار للسائق في Firebase ليظهر له popup تلقائي
-            await db.ref('drivers/' + nearest.did + '/pendingRequest').set({
-                requestId: rid,
-                at: Date.now()
-            });
-
-            notify('📡 تم إيجاد سائق!', 'جاري إرسال الطلب للسائق القريب...', 5000);
-
-        } catch (e) { console.error('assign error', e); }
-    }
-
-    function stopCircle() {
-        if (circleIntervals[rid]) { clearInterval(circleIntervals[rid]); delete circleIntervals[rid]; }
-        setTimeout(() => {
-            if (expandingCircles[rid]) { map.removeLayer(expandingCircles[rid]); delete expandingCircles[rid]; }
-        }, 600);
-    }
-
-    // ابحث فوراً
-    tryAssignDriver();
-
-    // ثم كل 4 ثوان مع تكبير الدائرة
-    circleIntervals[rid] = setInterval(async () => {
-        radius += 400;
-        if (expandingCircles[rid]) expandingCircles[rid].setRadius(radius);
-
-        await tryAssignDriver();
-
-        if (radius >= 3000) {
-            stopCircle();
-            // الطلب يبقى مرئياً لكل السائقين
-            notify('📡 طلبك مرئي', 'طلبك ظاهر لجميع السائقين المتصلين', 7000);
-        }
-    }, 4000);
-}
 
 // ==================== ADMIN STATS ====================
 async function loadAdminStats() {
